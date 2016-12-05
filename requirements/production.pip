@@ -1,0 +1,3 @@
+-r base.pip
+psycopg2
+django_compressor

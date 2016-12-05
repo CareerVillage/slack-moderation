@@ -1,0 +1,4 @@
+manifests/init.pp f933728e8d1837bb5612065743f6f54fc93e60d7
+manifests/config.pp 8a13066e273da320bbf06065a76bb4fb16350cf9
+manifests/params.pp 4b32df6e7f6aad78430f4aace542d274f6f1f8fc
+manifests/install.pp 92e7a6cd3f67a2740f16a95f47230110cbdfab62

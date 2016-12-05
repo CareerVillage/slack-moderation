@@ -1,0 +1,23 @@
+import os.path
+from sentry.conf.server import *
+
+ROOT = os.path.dirname(__file__)
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'logging',
+        'USER': 'moderation',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+    }
+}
+
+SENTRY_KEY = ''
+
+SENTRY_URL_PREFIX = ''
+
+SENTRY_PUBLIC = False
+SENTRY_WEB_HOST = '0.0.0.0'
+SENTRY_WEB_PORT = 9000

@@ -1,0 +1,12 @@
+User-agent: *
+<% if scope.lookupvar('moderation::target') != 'pro' %>
+Disallow: /
+<% else %>
+Disallow: /account/professional-notified-of-volunteer-opportunities/
+Disallow: /account/student-received-review-notification/
+Disallow: /matching_tags/
+Disallow: /matching_users/
+Disallow: /signup/_educator/
+Disallow: /signup/_student/
+Disallow: /signup/_professional/
+<% end %>

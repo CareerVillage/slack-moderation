@@ -1,0 +1,90 @@
+[
+    {
+        "pk": 1,
+        "model": "auth.user",
+        "fields": {
+            "username": "moderation",
+            "first_name": "",
+            "last_name": "",
+            "is_active": true,
+            "is_superuser": true,
+            "is_staff": true,
+            "last_login": "2013-01-29T11:33:21.330Z",
+            "groups": [],
+            "user_permissions": [],
+            "password": "pbkdf2_sha256$10000$XW7Uh1flMXm7$wqjk38SPioYcNLC44pTDluDnJAsA6RAOpe8Yo6NybJ8=",
+            "email": "team@moderation.org",
+            "date_joined": "2013-01-29T11:32:51.354Z"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "sentry.team",
+        "fields": {
+            "owner": 1,
+            "slug": "moderation",
+            "name": "moderation"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "sentry.teammember",
+        "fields": {
+            "type": 0,
+            "is_active": true,
+            "user": 1,
+            "date_added": "2013-01-29T11:33:31.142Z",
+            "team": 1
+        }
+    },
+    {
+        "pk": 1,
+        "model": "sentry.project",
+        "fields": {
+            "status": 0,
+            "name": "Sentry (Internal)",
+            "slug": "sentry",
+            "team": null,
+            "owner": null,
+            "date_added": "2013-01-28T09:44:12.387Z",
+            "public": false
+        }
+    },
+    {
+        "pk": 2,
+        "model": "sentry.project",
+        "fields": {
+            "status": 0,
+            "name": "moderation",
+            "slug": "moderation",
+            "team": 1,
+            "owner": 1,
+            "date_added": "2013-01-29T11:33:31.032Z",
+            "public": false
+        }
+    },
+    {
+        "pk": 1,
+        "model": "sentry.projectkey",
+        "fields": {
+            "public_key": "0651d11858944a4e9a56ea7042ed8324",
+            "project": 1,
+            "user": null,
+            "user_added": null,
+            "date_added": "2013-01-28T09:44:12.390Z",
+            "secret_key": "2132a1056c3d464eb887b20bd9cbefd3"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "sentry.projectkey",
+        "fields": {
+            "public_key": "a107fe909ab34a4c80685b33ea8d4f5d",
+            "project": 2,
+            "user": 1,
+            "user_added": null,
+            "date_added": "2013-01-29T11:33:31.246Z",
+            "secret_key": "ba4a23edde9d4455b03b856f80cfb986"
+        }
+    }
+]

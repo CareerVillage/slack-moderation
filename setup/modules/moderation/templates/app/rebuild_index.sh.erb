@@ -1,0 +1,2 @@
+cd <%= scope.lookupvar('moderation::app_dir') %>
+<%= scope.lookupvar('moderation::venv_dir') %>/bin/python manage.py rebuild_index --noinput

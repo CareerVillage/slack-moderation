@@ -1,0 +1,35 @@
+{
+  "name": "attachmentgenie-locales",
+  "version": "2.0.0",
+  "author": "Bram Vogelaar <bram@attachmentgenie.com>",
+  "summary": "Puppet locales Module",
+  "license": "MIT",
+  "source": "https://github.com/attachmentgenie/attachmentgenie-locales.git",
+  "project_page": "https://github.com/attachmentgenie/attachmentgenie-locales",
+  "issues_url": "https://github.com/attachmentgenie/attachmentgenie-locales/issues",
+  "dependencies": [
+    {"name":"puppetlabs/stdlib","version_requirement":">=2.2.1 <5.0.0"}
+  ],
+  "data_provider": null,
+  "description": "Module for configuring locales.",
+  "tags": [
+    "locales"
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "7",
+        "8"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "12",
+        "14",
+        "16"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+DEBUG = False
+TEMPLATE_DEBUG = DEBUG
+
+ALLOWED_HOSTS = ['slack-moderation.com']
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'moderation',
+        'USER': 'moderation',
+        'PASSWORD': 'moderation',
+        'HOST': 'localhost',
+        'PORT': '5432'
+    },
+}
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

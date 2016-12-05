@@ -1,0 +1,2 @@
+DEBUG = True
+ENABLE_SENTRY = False

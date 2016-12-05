@@ -1,0 +1,15 @@
+# THIS IS A PROVISIONED FILE.
+#
+# Do not modify directly.
+# Date: <%= Time.new() -%>
+
+<% if scope.lookupvar('moderation::target') == 'pro' -%>
+from production import *
+<% elsif scope.lookupvar('moderation::target') == 'sta' -%>
+from staging import *
+<% elsif scope.lookupvar('moderation::target') == 'test' -%>
+from test import *
+<% elsif scope.lookupvar('moderation::target') == 'dev' -%>
+from development import *
+<% end -%>
+from secrets import *

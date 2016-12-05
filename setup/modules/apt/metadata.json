@@ -1,0 +1,40 @@
+{
+  "name": "mmattice-apt",
+  "version": "1.8.1",
+  "author": "Mike Mattice",
+  "summary": "Provides an interface for managing Apt source, key, and definitions with Puppet",
+  "license": "Apache-2.0",
+  "source": "https://github.com/mmattice/puppetlabs-apt",
+  "project_page": "https://github.com/mmattice/puppetlabs-apt",
+  "issues_url": "https://github.com/mmattice/puppetlabs-apt/issues",
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "6",
+        "7"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "10.04",
+        "12.04",
+        "14.04"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "pe",
+      "version_requirement": "3.x"
+    },
+    {
+      "name": "puppet",
+      "version_requirement": "3.x"
+    }
+  ],
+  "dependencies": [
+    {"name":"puppetlabs/stdlib","version_requirement":">= 2.2.1"}
+  ]
+}
