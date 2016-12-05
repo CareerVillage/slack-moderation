@@ -1,5 +1,9 @@
 class moderation::venv {
 
+    if $moderation::target != 'dev' {
+        include moderation::code
+    }
+
     if $moderation::target == 'dev' {
         $settings = 'local'
     } elsif $moderation::target == 'pro' {
