@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Slack</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    </head>
+    <body>
+        <div class="container-fluid" style="margin-top: 15px;">
+            <div class="panel panel-primary">
+
+                <div class="panel-heading">Channels</div>
+                <div class="panel-body">
+                    <a href="{{ slack_connect_url }}">
+                        <img alt="Add to Slack"
+                             height="40"
+                             width="139"
+                             src="https://platform.slack-edge.com/img/add_to_slack.png"
+                             srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x,
+                                     https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+                    </a>
+                    <br>
+                    <br>
+                    <div class="col-main">
+                        <table class="table table-striped table-bordered">
+                            <tr>
+                                <th>channel_id</th>
+                                <th>channel_name</th>
+                            </tr>
+                            {% for channel_name, channel_data in data.items %}
+                                <tr>
+                                    <td>{{ channel_data.incoming_webhook.channel_id }}</td>
+                                    <td>
+                                        {{ channel_name }}
+                                        {% if channel_name == '#mod-inbox' %}
+                                            <form action="" method="post" style="display: inline; margin-left: 10px;">{% csrf_token %}
+                                                <input type="hidden" name="webhook_url" value="{{ channel_data.incoming_webhook.url }}">
+                                                <button type="submit" class="btn btn-default">Post Question</button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

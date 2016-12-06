@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'social.apps.django_app.default',
 ]
 
 MIDDLEWARE = [
@@ -60,7 +62,9 @@ ROOT_URLCONF = 'moderation.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            rel('apps/moderations/templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -137,4 +141,25 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
+)
+
+
+AUTHENTICATION_BACKENDS = (
+    'apps.moderations.views.SlackAuth',
+)
+
+
+SOCIAL_AUTH_SLACK_KEY = ''
+SOCIAL_AUTH_SLACK_SECRET = ''
+SOCIAL_AUTH_SLACK_SCOPE = []
+
+
+SOCIAL_AUTH_PIPELINE = (
+    'social.pipeline.social_auth.social_details',
+    'social.pipeline.social_auth.social_uid',
+    'social.pipeline.social_auth.auth_allowed',
+    'social.pipeline.social_auth.social_user',
+    'social.pipeline.user.get_username',
+
+    'apps.moderations.views.save_slack_integration',
 )
