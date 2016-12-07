@@ -8,6 +8,8 @@
 secrets.py
 local.py
 production.py
+staging.py
+development.py
 app/media/
 app/assets/
 keys/*

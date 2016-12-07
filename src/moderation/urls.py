@@ -16,21 +16,10 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 
-from apps.moderations import slack
-from apps.moderations import views
-
-
-social_urls = [
-    url(r'^login/(?P<backend>[^/]+)/$', views.auth, name='begin'),
-    url(r'^complete/(?P<backend>[^/]+)/$', views.complete, name='complete'),
-]
-
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-
-    url(r'^slack/$', slack.interactions, name='interactions'),
-    url(r'^moderation/$', slack.moderation, name='moderation'),
-
-    url('', include(social_urls, namespace='social')),
+    url('', include('social.apps.django_app.urls', namespace='social')),
+    url(r'^accounts/', include('accounts.urls', namespace='accounts')),
 ]
+

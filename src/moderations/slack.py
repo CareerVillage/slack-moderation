@@ -8,7 +8,60 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 
-from .views import SlackSdk
+class SlackSdk(object):
+
+    def __init__(self):
+        self.data = {}
+        with open(self.file_name, 'r') as f:
+            contents = f.read()
+            if contents != "":
+                self.data = json.loads(contents)
+
+    def create_message(self, channel_name, text='', attachments=[]):
+        channel = self.data[channel_name]
+
+        is_image = False
+        if 'https://res.cloudinary.com/' in text:
+            is_image = True
+
+        return requests.get(
+            url='https://slack.com/api/chat.postMessage',
+            params={
+                'token': channel['access_token'],
+                'channel': channel['incoming_webhook']['channel_id'],
+                'text': text,
+                'attachments': json.dumps(attachments),
+                'unfurl_links': False,
+                'unfurl_media': is_image,
+            }
+        )
+
+    def delete_message(self, channel_name, ts):
+        channel = self.data[channel_name]
+        return requests.get(
+            url='https://slack.com/api/chat.delete',
+            params={
+                'token': channel['access_token'],
+                'ts': ts,
+                'channel': channel['incoming_webhook']['channel_id'],
+            }
+        )
+
+    def update_message(self, channel_name, ts, text='', attachments=[]):
+        channel = self.data[channel_name]
+        return requests.get(
+            url='https://slack.com/api/chat.update',
+            params={
+                'token': channel['access_token'],
+                'ts': ts,
+                'channel': channel['incoming_webhook']['channel_id'],
+                'text': text,
+                'attachments': json.dumps(attachments),
+                'parse': 'none',
+            }
+        )
+
+
 
 
 @csrf_exempt

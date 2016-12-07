@@ -43,8 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'social.apps.django_app.default',
+    'accounts',
+    'moderations',
 ]
 
 MIDDLEWARE = [
@@ -78,18 +79,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'moderation.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/1.10/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -145,7 +134,7 @@ STATICFILES_FINDERS = (
 
 
 AUTHENTICATION_BACKENDS = (
-    'apps.moderations.views.SlackAuth',
+    'social.backends.slack.SlackOAuth2',
 )
 
 
@@ -160,6 +149,8 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.auth_allowed',
     'social.pipeline.social_auth.social_user',
     'social.pipeline.user.get_username',
-
-    'apps.moderations.views.save_slack_integration',
+    'accounts.views.social_complete',
 )
+
+LOGIN_REDIRECT_URL = '/'
+
