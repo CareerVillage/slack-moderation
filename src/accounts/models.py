@@ -10,5 +10,6 @@ class AuthToken(models.Model):
 
     service_name = models.TextField()
     service_entity_auth_name = models.TextField()
+    service_entity_auth_id = models.TextField()
     service_auth_token = models.TextField()
     username = models.CharField(max_length=50)

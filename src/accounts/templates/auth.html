@@ -24,12 +24,18 @@
                     <div class="col-main">
                         <table class="table table-striped table-bordered">
                             <tr>
-                                <th>channel_id</th>
+                                <th>channel</th>
+                                <th>channel id</th>
                                 <th>username</th>
                             </tr>
                             {% for object in object_list %}
                                 <tr>
-                                    <td>{{ object.service_entity_auth_name }}</td>
+                                    <td>
+                                        {{ object.service_entity_auth_name }}
+                                    </td>
+                                    <td>
+                                        {{ object.service_entity_auth_id }}
+                                    </td>
                                     <td>
                                         {{ object.username }}
                                     </td>

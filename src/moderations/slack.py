@@ -1,24 +1,54 @@
+from datetime import datetime
 import json
 import requests
-
-from datetime import datetime
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.views.decorators.csrf import csrf_exempt
+from accounts.models import AuthToken
+
 
 class SlackSdk(object):
 
-    def __init__(self):
-        self.data = {}
-        with open(self.file_name, 'r') as f:
-            contents = f.read()
-            if contents != "":
-                self.data = json.loads(contents)
+    @staticmethod
+    def get_channel_data(channel):
+        auth_token_object = AuthToken.objects.filter(
+            service_name='slack', service_entity_auth_name=channel
+        ).first()
+        channel_id = auth_token_object.service_entity_auth_id
+        token = auth_token_object.service_auth_token
 
-    def create_message(self, channel_name, text='', attachments=[]):
-        channel = self.data[channel_name]
+        return token, channel_id
+
+    @staticmethod
+    def post_moderation(text):
+
+        attachments = [
+            {
+                'fallback': "Moderator actions",
+                'callback_id': 'mod-inbox',
+                'attachment_type': 'default',
+                'actions': [
+                    {
+                        'name': 'approve',
+                        'text': "Approve",
+                        'type': 'button',
+                        'value': 'approve',
+                        'style': 'primary'
+                    },
+                    {
+                        'name': 'reject',
+                        'text': "Reject",
+                        'type': 'button',
+                        'value': 'reject'
+                    }
+                ]
+            }
+        ]
+
+        token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
+        return SlackSdk.create_message(token, channel_id, text, attachments)
+
+    @staticmethod
+    def create_message(access_token, channel_id,
+                       text='', attachments=[]):
 
         is_image = False
         if 'https://res.cloudinary.com/' in text:
@@ -27,8 +57,8 @@ class SlackSdk(object):
         return requests.get(
             url='https://slack.com/api/chat.postMessage',
             params={
-                'token': channel['access_token'],
-                'channel': channel['incoming_webhook']['channel_id'],
+                'token': access_token,
+                'channel': channel_id,
                 'text': text,
                 'attachments': json.dumps(attachments),
                 'unfurl_links': False,
@@ -36,25 +66,27 @@ class SlackSdk(object):
             }
         )
 
-    def delete_message(self, channel_name, ts):
-        channel = self.data[channel_name]
+    @staticmethod
+    def delete_message(access_token, channel_id, ts):
         return requests.get(
             url='https://slack.com/api/chat.delete',
             params={
-                'token': channel['access_token'],
+                'token': access_token,
                 'ts': ts,
-                'channel': channel['incoming_webhook']['channel_id'],
+                'channel': channel_id,
             }
         )
 
-    def update_message(self, channel_name, ts, text='', attachments=[]):
-        channel = self.data[channel_name]
+    @staticmethod
+    def update_message(access_token, channel_id, ts,
+                       text='', attachments=[]):
+
         return requests.get(
             url='https://slack.com/api/chat.update',
             params={
-                'token': channel['access_token'],
+                'token': access_token,
                 'ts': ts,
-                'channel': channel['incoming_webhook']['channel_id'],
+                'channel': channel_id,
                 'text': text,
                 'attachments': json.dumps(attachments),
                 'parse': 'none',
@@ -62,57 +94,8 @@ class SlackSdk(object):
         )
 
 
-
-
-@csrf_exempt
-def interactions(request):
-    slack_url = u'{base}'.format(
-        base=reverse('social:begin', kwargs={'backend': 'slack'}),
-    )
-
-    slack = SlackSdk()
-
-    context = {
-        'slack_connect_url': slack_url,
-        'data': slack.data,
-    }
-
-    if request.method == 'POST':
-        # TODO: Remove static message
-        text = ">New content! Educator <https://careervillage.org/users/1|Jared Chung> posted the <https://careervillage.org/questions/1234|answer> in response to <https://careervillage.org/questions/1234|What is the best way to focus for tests?>:\n>\"What I have tried to focus when taking tests is to not place to much pressure on myself. A test is simply a gauge of how you understand the test material. If you don't do well on a test, it gives you information on your progress. Having a good understanding of the materials is also very important. Many times the important skill is understanding how to take tests, so if you don't do well on a test, and you find out how the test answers were expected, you will have a better understanding for the next test. If you try to treat a test as if it is just another task, you may find the anxiety is lessened.\""
-        attachments = [
-            {
-                "fallback": "Moderator actions",
-                "callback_id": "mod-inbox",
-                "attachment_type": "default",
-                "actions": [
-                    {
-                        "name": "approve",
-                        "text": "Approve",
-                        "type": "button",
-                        "value": "approve",
-                        "style": "primary"
-                    },
-                    {
-                        "name": "reject",
-                        "text": "Reject",
-                        "type": "button",
-                        "value": "reject"
-                    }
-                ]
-            }
-        ]
-
-        response = slack.create_message(
-            '#mod-inbox', text=text, attachments=attachments
-        )
-
-    return render_to_response('interactions.html',
-                              context,
-                              RequestContext(request))
-
-
 def mod_inbox_approved(data):
+
     original_message = data.get('original_message')
     text = original_message.get('text')
     approved_by = data.get('user').get('name')
@@ -133,14 +116,16 @@ def mod_inbox_approved(data):
         }
     ]
 
-    slack = SlackSdk()
-
-    response = slack.create_message(
-        '#mod-approved', text=text, attachments=attachments
-    )
+    token, channel_id = SlackSdk.get_channel_data('#mod-approved')
+    print token
+    print channel_id
+    SlackSdk.create_message(token, channel_id, text, attachments)
 
     ts = data.get('message_ts')
-    slack.delete_message('#mod-inbox', ts)
+    print token
+    print channel_id
+    token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
+    SlackSdk.delete_message(token, channel_id, ts)
 
     return HttpResponse('')
 
@@ -197,10 +182,10 @@ def mod_inbox_reject(data):
         }
     ]
 
-    slack = SlackSdk()
-
+    token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
     ts = data.get('message_ts')
-    slack.update_message('#mod-inbox', ts, text=text, attachments=attachments)
+    SlackSdk.update_message(token, channel_id, ts,
+                            text=text, attachments=attachments)
 
     return HttpResponse('')
 
@@ -232,10 +217,10 @@ def mod_inbox_reject_undo(data):
         }
     ]
 
-    slack = SlackSdk()
-
+    token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
     ts = data.get('message_ts')
-    slack.update_message('#mod-inbox', ts, text=text, attachments=attachments)
+    SlackSdk.update_message(token, channel_id,
+                            ts, text=text, attachments=attachments)
 
     return HttpResponse('')
 
@@ -271,12 +256,14 @@ def mod_inbox_reject_reason(data):
         }
     ]
 
-    slack = SlackSdk()
+    token, channel_id = SlackSdk.get_channel_data('#mod-flagged')
 
-    slack.create_message('#mod-flagged', text=text, attachments=attachments)
+    SlackSdk.create_message(token, channel_id,
+                            text=text, attachments=attachments)
 
+    token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
     ts = data.get('message_ts')
-    slack.delete_message('#mod-inbox', ts)
+    SlackSdk.delete_message(token, channel_id, ts)
 
     return HttpResponse('')
 
@@ -321,12 +308,13 @@ def mod_flagged_resolve(data):
         }
     ]
 
-    slack = SlackSdk()
+    token, channel_id = SlackSdk.get_channel_data('#mod-resolved')
+    SlackSdk.create_message(token, channel_id, text=text,
+                            attachments=attachments)
 
-    slack.create_message('#mod-resolved', text=text, attachments=attachments)
-
+    token, channel_id = SlackSdk.get_channel_data('#mod-flagged')
     ts = data.get('message_ts')
-    slack.delete_message('#mod-flagged', ts)
+    SlackSdk.delete_message(token, channel_id, ts)
 
     return HttpResponse('')
 
@@ -339,8 +327,8 @@ def mod_flagged(data):
         return mod_flagged_resolve(data)
 
 
-def moderation(request):
-    payload = request.POST.get('payload')
+def moderate(data):
+    payload = data.get('payload')
 
     if payload:
         data = json.loads(payload)

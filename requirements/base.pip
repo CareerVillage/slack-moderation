@@ -1,4 +1,5 @@
-Django
+django
+djangorestframework
 psycopg2
 python-social-auth
 raven

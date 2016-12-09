@@ -43,22 +43,21 @@ Vagrant.configure("2") do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
+  config.vm.provider "virtualbox" do |vb|
+
+     # Customize the amount of memory on the VM:
+     vb.memory = "4096"
+   end
+
 
     config.vm.provision :shell, :path => "setup/scripts/bootstrap_puppet.sh"
 
     config.vm.define :dev do |master_config|
+
         master_config.vm.synced_folder ".", "/home/vagrant/moderation/source"
 
-        master_config.vm.network "forwarded_port", guest: 80,    host: 8000    #app
-
+        master_config.vm.network "forwarded_port", guest: 80, host: 8000 #app
+        #master_config.vm.network "public_network"
         master_config.vm.provision :puppet do |puppet|
             puppet.manifests_path = "setup"
             puppet.module_path = "setup/modules"
