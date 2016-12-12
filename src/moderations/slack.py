@@ -62,14 +62,14 @@ class SlackSdk(object):
 
         text = "Leaderboard as of {}".format(datetime.utcnow())
 
-        text += '┌──────────┬──────────┐\n'
+        text += '_______________________\n'
         text += '| Mod      | All time |\n'
 
         for k, v in leaderboard:
-            text += '├──────────┼──────────┤\n'
+            text += '|----------|----------|\n'
             text += '| {}      | {} |\n'.format(k, v)
 
-        text += '└──────────┴──────────┘\n'
+        text += '-----------------------\n'
 
         token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
         return SlackSdk.create_message(token, channel_id,
