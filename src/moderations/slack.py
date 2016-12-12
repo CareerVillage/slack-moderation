@@ -3,6 +3,7 @@ import json
 import requests
 from django.http import HttpResponse
 from accounts.models import AuthToken
+from moderations.models import Moderation, ModerationAction
 
 
 class SlackSdk(object):
@@ -44,26 +45,58 @@ class SlackSdk(object):
         ]
 
         token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-        return SlackSdk.create_message(token, channel_id, text, attachments)
+        response = SlackSdk.create_message(token,
+                                           channel_id, text, attachments)
+
+        response_data = json.loads(response)
+
+        return response_data
+
+    @staticmethod
+    def post_leaderboard(leaderboard):
+        """
+        leaderboard = [
+            {'@jared': 12,345},
+        ]
+        """
+
+        text = "Leaderboard as of {}".format(datetime.utcnow())
+
+        text += '┌──────────┬──────────┐\n'
+        text += '| Mod      | All time |\n'
+
+        for k, v in leaderboard:
+            text += '├──────────┼──────────┤\n'
+            text += '| {}      | {} |\n'.format(k, v)
+
+        text += '└──────────┴──────────┘\n'
+
+        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
+        return SlackSdk.create_message(token, channel_id,
+                                       text, [], in_channel=True)
 
     @staticmethod
     def create_message(access_token, channel_id,
-                       text='', attachments=[]):
+                       text='', attachments=[], in_channel=False):
 
         is_image = False
         if 'https://res.cloudinary.com/' in text:
             is_image = True
 
+        params = {
+            'token': access_token,
+            'channel': channel_id,
+            'text': text,
+            'attachments': json.dumps(attachments),
+            'unfurl_links': False,
+            'unfurl_media': is_image,
+        }
+        if in_channel:
+            params['response_type'] = 'in_channel'
+
         return requests.get(
             url='https://slack.com/api/chat.postMessage',
-            params={
-                'token': access_token,
-                'channel': channel_id,
-                'text': text,
-                'attachments': json.dumps(attachments),
-                'unfurl_links': False,
-                'unfurl_media': is_image,
-            }
+            params=params
         )
 
     @staticmethod
@@ -268,9 +301,7 @@ def mod_inbox_reject_reason(data):
     return HttpResponse('')
 
 
-def mod_inbox(data):
-    actions = data.get('actions')[0]
-    action = actions.get('value')
+def mod_inbox(data, action):
 
     if action == 'approve':
         return mod_inbox_approved(data)
@@ -319,9 +350,7 @@ def mod_flagged_resolve(data):
     return HttpResponse('')
 
 
-def mod_flagged(data):
-    actions = data.get('actions')[0]
-    action = actions.get('value')
+def mod_flagged(data, action):
 
     if action == 'resolve':
         return mod_flagged_resolve(data)
@@ -330,16 +359,29 @@ def mod_flagged(data):
 def moderate(data):
     payload = data.get('payload')
 
+    actions = data.get('actions')[0]
+    action = actions.get('value')
+    username = data.get('user').get('name')
+    ts = data.get('message_ts')
+
+    moderation = Moderation.get_by_ts(ts)
+    ModerationAction.objects.create(moderation=moderation,
+                                    action=action,
+                                    action_author_id=username)
+    moderation.last_action = action
+    moderation.last_action_author_id = username
+    moderation.save()
+
     if payload:
         data = json.loads(payload)
         callback_id = data.get('callback_id')
 
         if callback_id == 'mod-inbox':
-            return mod_inbox(data)
+            return mod_inbox(data, action)
 
         elif callback_id == 'mod-flagged':
             return mod_flagged(data)
 
         return HttpResponse(json.dumps(data, indent=4))
 
-    return HttpResponse('Hello world.')
+    return HttpResponse('')

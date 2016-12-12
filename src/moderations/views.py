@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Moderation, ModerationAction
 from .serializers import ModerationSerializer
 from .slack import SlackSdk, moderate
+from .stats import get_leaderboard
 
 
 class ModerationActionModelViewSet(viewsets.ModelViewSet):
@@ -21,23 +22,25 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
            Send message to Slack
         """
         data = serializer.validated_data
-        print data
+
+        slack = SlackSdk()
+        response_data = slack.post_moderation(
+            text=data['content'])
+
+        ts = response_data.get('ts')
+
         moderation = Moderation.objects.create_or_update(
             content_key=data['content_key'],
             content=data['content'],
             content_author_id=data['content_author_id'],
-            last_action=data['action'])
+            last_action=data['action'],
+            last_action_author_id=data['content_author_id'],
+            moderation_id=ts
+        )
         serializer.moderation = moderation
 
-        content = serializer.validated_data.get('content')
         ModerationAction.objects.create(moderation=moderation)
 
-        slack = SlackSdk()
-
-        response = slack.post_moderation(
-            text=content)
-
-        print response
 
 @api_view(['POST'])
 def slack_response(request):
@@ -45,3 +48,12 @@ def slack_response(request):
     data = request.data
 
     return moderate(data)
+
+
+@api_view(['POST'])
+def generate_stats(request):
+
+    leaderboard = get_leaderboard()
+    slack = SlackSdk()
+    slack.post_leaderboard(leaderboard)
+    return Response('')

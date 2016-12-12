@@ -15,4 +15,5 @@ class ModerationSerializer(serializers.ModelSerializer):
             'content',
             'content_author_id',
             'action',
+            'action_author_id',
         )
