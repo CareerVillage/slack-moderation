@@ -104,7 +104,7 @@ class moderation ($target, $root_dir, $user, $group) {
         }
     }
 
-    package { ['libpq-dev', 'make', 'git-core']:
+    package { ['libpq-dev', 'make', 'git-core', 'libffi-dev']:
         ensure   => installed,
         provider => 'apt';
     }
