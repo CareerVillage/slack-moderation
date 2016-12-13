@@ -48,9 +48,7 @@ class SlackSdk(object):
         response = SlackSdk.create_message(token,
                                            channel_id, text, attachments)
 
-        response_data = json.loads(response)
-
-        return response_data
+        return response.json()
 
     @staticmethod
     def post_leaderboard(leaderboard):
@@ -357,14 +355,13 @@ def mod_flagged(data, action):
 
 
 def moderate(data):
-    payload = data.get('payload')
-
-    actions = data.get('actions')[0]
-    action = actions.get('value')
+    data = data.get('payload')
+    data = json.loads(data)
+    action = data.get('actions')[0].get('value')
     username = data.get('user').get('name')
-    ts = data.get('message_ts')
+    message_id = data.get('message_ts')
 
-    moderation = Moderation.get_by_ts(ts)
+    moderation = Moderation.objects.get_by_message_id(message_id)
     ModerationAction.objects.create(moderation=moderation,
                                     action=action,
                                     action_author_id=username)
@@ -372,8 +369,7 @@ def moderate(data):
     moderation.last_action_author_id = username
     moderation.save()
 
-    if payload:
-        data = json.loads(payload)
+    if data:
         callback_id = data.get('callback_id')
 
         if callback_id == 'mod-inbox':

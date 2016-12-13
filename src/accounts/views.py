@@ -30,4 +30,3 @@ def social_complete(*args, **kwargs):
                                  service_auth_token=access_token,
                                  username=data['user'])
     return redirect(reverse('accounts:auth'))
-

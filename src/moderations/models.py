@@ -16,6 +16,7 @@ class ModerationManager(models.Manager):
         content_author_id = kwargs.get('content_author_id')
         action = kwargs['last_action']
         action_author_id = kwargs['last_action_author_id']
+        message_id = kwargs['message_id']
         moderation = self.filter(content_key=content_key).first()
         if moderation:
             moderation.last_action = action
@@ -26,12 +27,13 @@ class ModerationManager(models.Manager):
                                      content=content,
                                      content_author_id=content_author_id,
                                      last_action=action,
-                                     last_action_author_id=action_author_id)
+                                     last_action_author_id=action_author_id,
+                                     message_id=message_id)
 
         return moderation
 
-    def get_by_ts(self, ts):
-        return self.filter(moderation_id=ts).first()
+    def get_by_message_id(self, message_id):
+        return self.filter(message_id=message_id).first()
 
 
 class Moderation(models.Model):
@@ -46,7 +48,7 @@ class Moderation(models.Model):
     last_action = models.CharField(max_length=20)
     last_action_author_id = models.TextField()
     objects = ModerationManager()
-    tls = models.TextField(blank=True, null=True)
+    message_id = models.TextField(blank=True, null=True)
 
 
 class ModerationAction(models.Model):
@@ -55,5 +57,5 @@ class ModerationAction(models.Model):
     """
     moderation = models.ForeignKey(Moderation)
     action = models.CharField(max_length=10)
-    action_author_id =  models.TextField()
+    action_author_id = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
