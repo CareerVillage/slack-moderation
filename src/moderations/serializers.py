@@ -4,9 +4,9 @@ from .models import ModerationAction
 
 class ModerationSerializer(serializers.ModelSerializer):
 
-    content_key = serializers.CharField()
-    content = serializers.CharField()
-    content_author_id = serializers.CharField()
+    content_key = serializers.CharField(write_only=True)
+    content = serializers.CharField(write_only=True)
+    content_author_id = serializers.CharField(write_only=True)
 
     class Meta:
         model = ModerationAction

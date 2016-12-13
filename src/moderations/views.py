@@ -29,17 +29,18 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
         message_id = response_data.get('message_ts')
 
-        moderation = Moderation.objects.create_or_update(
+        moderation = Moderation.objects.create(
             content_key=data['content_key'],
             content=data['content'],
             content_author_id=data['content_author_id'],
-            last_action=data['action'],
-            last_action_author_id=data['content_author_id'],
+            status='#mod-inbox',
+            status_reason='moderate',
             message_id=message_id
         )
         serializer.moderation = moderation
 
-        ModerationAction.objects.create(moderation=moderation)
+        ModerationAction.objects.create(moderation=moderation,
+                                        action='moderate')
 
 
 @api_view(['POST'])
