@@ -126,7 +126,7 @@ class moderation::app::site ($role) {
                                         --pp=${moderation::app_dir}
                                         --module=moderation.wsgi:application",
 
-                environment => "DJANGO_SETTINGS_MODULE='moderation.settings.base'",
+                environment => "DJANGO_SETTINGS_MODULE='moderation.settings'",
                 user        => $moderation::user,
                 require     => [Class["moderation::venv"],
                                 Class["moderation"],
@@ -157,7 +157,7 @@ class moderation::app::site ($role) {
                                         --pp=${moderation::app_dir}
                                         --module=moderation.wsgi:application",
 
-                environment => "DJANGO_SETTINGS_MODULE='moderation.settings.base'",
+                environment => "DJANGO_SETTINGS_MODULE='moderation.settings'",
                 user        => $moderation::user,
                 require     => Class["moderation::app::deploy"],
                 stdout_logfile => "${moderation::log_dir}/moderation_site_stdout.log",

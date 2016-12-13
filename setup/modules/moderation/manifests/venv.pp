@@ -20,7 +20,7 @@ class moderation::venv {
         requirements => "${moderation::source_dir}/requirements/${settings}.pip",
         user         => $moderation::user,
         group        => $moderation::group,
-        require      => [Class["moderation"], Class["moderation::code"]];
+        require      => [Class["moderation"]];
     }
 
 }

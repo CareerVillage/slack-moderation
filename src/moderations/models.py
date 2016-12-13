@@ -55,5 +55,5 @@ class ModerationAction(models.Model):
     """
     moderation = models.ForeignKey(Moderation)
     action = models.CharField(max_length=10)
-    action_author_id =  models.TextField()
+    action_author_id = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
