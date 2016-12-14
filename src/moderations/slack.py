@@ -219,7 +219,8 @@ def mod_inbox_approved(data, moderation):
         data = response.json()
         if data.get('ok'):
             token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-            save_moderation_action(moderation, approved_by, channel_id, 'approve', data.get('ts'))
+            save_moderation_action(moderation, approved_by, channel_id,
+                                   'approve', data.get('ts'))
             reponse = SlackSdk.delete_message(token, channel_id, ts)
 
     return HttpResponse('')
@@ -281,7 +282,7 @@ def mod_inbox_reject(data, moderation):
 
     token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
     response = SlackSdk.update_message(token, channel_id, ts,
-                            text=text, attachments=attachments)
+                                       text=text, attachments=attachments)
 
     data = response.json()
 
@@ -424,7 +425,8 @@ def mod_flagged_resolve(data, moderation):
             token, channel_id = SlackSdk.get_channel_data('#mod-flagged')
             ts = data.get('ts')
 
-            save_moderation_action(moderation, resolved_by, channel_id, 'resolve', ts)
+            save_moderation_action(moderation, resolved_by, channel_id,
+                                   'resolve', ts)
             SlackSdk.delete_message(token, channel_id, message_ts)
 
     return HttpResponse('')
@@ -437,7 +439,8 @@ def mod_flagged(data, action, moderation):
     assert False, action
 
 
-def save_moderation_action(moderation, username, channel_id, action, message_id):
+def save_moderation_action(moderation, username, channel_id,
+                           action, message_id):
     moderation.status = channel_id
     moderation.status_reason = action
     moderation.message_id = message_id
