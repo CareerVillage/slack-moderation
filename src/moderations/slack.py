@@ -50,9 +50,7 @@ class SlackSdk(object):
         response = SlackSdk.create_message(token,
                                            channel_id, text, attachments)
 
-        response_data = json.loads(response)
-
-        return response_data
+        return response.json()
 
     @staticmethod
     def post_leaderboard(leaderboard):
@@ -76,7 +74,7 @@ class SlackSdk(object):
 
         def timedelta_to_str(td):
             result = ''
-            td = str(td[0]).split(',')
+            td = str(td).split(',')
             if len(td) > 1:
                 td.pop(0)
                 result += td[0] + ' '
@@ -95,7 +93,7 @@ class SlackSdk(object):
                 return 0
 
         text = (
-            "LEADERBOARD as of {date}"
+            "LEADERBOARD as of {date}\n"
             "```\n"
             "{all_time}\n"
             "{seven_days}\n"
@@ -189,7 +187,7 @@ class SlackSdk(object):
         )
 
 
-def mod_inbox_approved(data):
+def mod_inbox_approved(data, moderation):
 
     original_message = data.get('original_message')
     text = original_message.get('text')
@@ -279,8 +277,10 @@ def mod_inbox_reject(data, moderation):
     ]
 
     token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-    SlackSdk.update_message(token, channel_id, ts,
+    response = SlackSdk.update_message(token, channel_id, ts,
                             text=text, attachments=attachments)
+
+    data = response.json()
 
     return HttpResponse('')
 
@@ -320,7 +320,7 @@ def mod_inbox_reject_undo(data):
     return HttpResponse('')
 
 
-def mod_inbox_reject_reason(data):
+def mod_inbox_reject_reason(data, moderation):
     original_message = data.get('original_message')
     text = original_message.get('text')
     rejected_by = data.get('user').get('name')
@@ -368,29 +368,26 @@ def mod_inbox_reject_reason(data):
 
             SlackSdk.delete_message(token, channel_id, ts)
 
-    token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-    SlackSdk.delete_message(token, channel_id, ts)
-
     return HttpResponse('')
 
 
-def mod_inbox(data, action):
+def mod_inbox(data, action, moderation):
 
     if action == 'approve':
-        return mod_inbox_approved(data)
+        return mod_inbox_approved(data, moderation)
 
     elif action == 'reject':
-        return mod_inbox_reject(data)
+        return mod_inbox_reject(data, moderation)
 
     elif action == 'undo':
         return mod_inbox_reject_undo(data)
 
     elif (action == 'off_topic') or (action == 'inappropriate') \
             or (action == 'contact_info') or (action == 'other'):
-        return mod_inbox_reject_reason(data)
+        return mod_inbox_reject_reason(data, moderation)
 
 
-def mod_flagged_resolve(data):
+def mod_flagged_resolve(data, moderation):
     original_message = data.get('original_message')
     text = original_message.get('text')
     resolved_by = data.get('user').get('name')
@@ -425,8 +422,7 @@ def mod_flagged_resolve(data):
             ts = data.get('ts')
 
             save_moderation_action(moderation, resolved_by, channel_id, 'resolve', ts)
-
-        SlackSdk.delete_message(token, channel_id, message_ts)
+            SlackSdk.delete_message(token, channel_id, message_ts)
 
     return HttpResponse('')
 
@@ -449,26 +445,23 @@ def save_moderation_action(moderation, username, channel_id, action, message_id)
 
 
 def moderate(data):
-    payload = data.get('payload')
+    """
+    """
+    data = data.get('payload')
+    data = json.loads(data)
+    if data:
 
-    actions = data.get('actions')[0]
-    action = actions.get('value')
-    username = data.get('user').get('name')
-    ts = data.get('message_ts')
+        action = data.get('actions')[0].get('value')
+        message_id = data.get('message_ts')
 
-    moderation = Moderation.objects.get_by_message_id(message_id)
-    assert moderation is not None, data
+        moderation = Moderation.objects.get_by_message_id(message_id)
 
-    if payload:
-        data = json.loads(payload)
         callback_id = data.get('callback_id')
 
         if callback_id == 'mod-inbox':
-            return mod_inbox(data, action)
+            return mod_inbox(data, action, moderation)
 
         elif callback_id == 'mod-flagged':
             return mod_flagged(data, action, moderation)
 
         return HttpResponse(json.dumps(data, indent=4))
-
-    return HttpResponse('')
