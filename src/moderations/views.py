@@ -27,20 +27,19 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         response_data = slack.post_moderation(
             text=data['content'])
 
-        message_id = response_data.get('message_ts')
+        message_id = response_data.get('ts')
 
-        moderation = Moderation.objects.create(
+        moderation = Moderation.objects.create_or_update(
             content_key=data['content_key'],
             content=data['content'],
             content_author_id=data['content_author_id'],
-            status='#mod-inbox',
-            status_reason='moderate',
-            message_id=message_id
+            last_action=data['action'],
+            last_action_author_id=data['content_author_id'],
+            moderation_id=ts
         )
         serializer.moderation = moderation
 
-        ModerationAction.objects.create(moderation=moderation,
-                                        action='moderate')
+        ModerationAction.objects.create(moderation=moderation)
 
 
 @api_view(['POST'])
