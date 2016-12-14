@@ -64,7 +64,10 @@ class SlackSdk(object):
             text = '┌──────────────────────┬──────────────────────┐\n'
             text += '│ {0: <20} | {1: <20} │\n'.format('Mod', title)
 
-            for k, v in leaderboard.items():
+            sorted_leaderboard = sorted(leaderboard.items(),
+                                        key=lambda x: x[1],
+                                        reverse=True)
+            for k, v in sorted_leaderboard:
                 if k:
                     text += '├──────────────────────┼──────────────────────┤\n'
                     text += '│ {0: <20} │ {1: <20} │\n'.format(k, v)
@@ -82,13 +85,13 @@ class SlackSdk(object):
 
             result += '%s hrs ' % time[0]
             result += '%s min ' % time[1]
-            result += '%s sec ' % time[2].split('.')[0]
+            result += '%s sec' % time[2].split('.')[0]
 
             return result
 
         def avg(a, b):
-            if b > 0:
-                return a/b * 100.0
+            if b > 0.0:
+                return a/float(b) * 100.0
             else:
                 return 0
 
