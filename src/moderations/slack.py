@@ -110,28 +110,48 @@ class SlackSdk(object):
 
         text += 'MOD TEAM SPEED REPORT AS OF {} UTC\n'.format(datetime.utcnow())
         text += '```\n'
-        text += 'Average time to first mod review (all-time): %s over %i pieces of content\n' % (timedelta_to_str(leaderboard['avg']['all_time']['review'][0]),
-                                                                                                      leaderboard['avg']['all_time']['review'][1])
+        text += 'Average time to first mod review (all-time): %s over %i pieces of content\n' \
+            % (timedelta_to_str(leaderboard['avg']['all_time']['review'][0]),
+               leaderboard['avg']['all_time']['review'][1])
 
-        text += 'Average time to first mod review (last 7 days): %s over %i pieces of content\n' % (timedelta_to_str(leaderboard['avg']['seven_days']['review'][0]),
-                                                                                                    leaderboard['avg']['seven_days']['review'][1])
+        text += 'Average time to first mod review (last 7 days): %s over %i pieces of content\n' \
+            % (timedelta_to_str(leaderboard['avg']['seven_days']['review'][0]),
+               leaderboard['avg']['seven_days']['review'][1])
 
-        text += 'Average time to first mod resolution (all-time): %s over %i pieces of content\n' % (timedelta_to_str(leaderboard['avg']['all_time']['resolution'][0]),
-                                                                                                     leaderboard['avg']['all_time']['resolution'][1])
+        text += 'Average time to first mod resolution (all-time): %s over %i pieces of content\n' \
+            % (timedelta_to_str(leaderboard['avg']['all_time']['resolution'][0]),
+               leaderboard['avg']['all_time']['resolution'][1])
 
-        text += 'Average time to first mod resolution (last 7 days): %s over %i pieces of content\n' % (timedelta_to_str(leaderboard['avg']['seven_days']['resolution'][0]),
-                                                                                                        leaderboard['avg']['seven_days']['resolution'][1])
+        text += 'Average time to first mod resolution (last 7 days): %s over %i pieces of content\n' \
+            % (timedelta_to_str(leaderboard['avg']['seven_days']['resolution'][0]),
+               leaderboard['avg']['seven_days']['resolution'][1])
         text += '```\n'
 
         text += 'CONTENT QUALITY REPORT AS OF {} UTC\n'.format(datetime.utcnow())
         counts = leaderboard['counts']
         text += '```\n'
-        text += 'Past 7 days content: %i\n' % counts['total']
-        text += 'Past 7 days flagged by mods: %i (%.2f%%)\n' % (counts['total_flagged'], avg(counts['total_flagged'], counts['total']))
-        text += 'Reason: Off topic: %i (%.2f%% of flags)\n' % (counts['off_topic'], avg(counts['off_topic'], counts['total_flagged']))
-        text += 'Reason: Inappropriate: %i (%.2f%% of flags)\n' % (counts['inappropriate'], avg(counts['inappropriate'], counts['total_flagged']))
-        text += 'Reason: Contact info: %i (%.2f%% of flags)\n' % (counts['contact_info'], avg(counts['contact_info'], counts['total_flagged']))
-        text += 'Reason: Other: %i (%.2f%% of flags)\n' % (counts['other'], avg(counts['other'], counts['total_flagged']))
+        text += 'Past 7 days content: %i\n' \
+            % counts['total']
+
+        text += 'Past 7 days flagged by mods: %i (%.2f%%)\n' \
+            % (counts['total_flagged'],
+               avg(counts['total_flagged'], counts['total']))
+
+        text += 'Reason: Off topic: %i (%.2f%% of flags)\n' \
+            % (counts['off_topic'],
+               avg(counts['off_topic'], counts['total_flagged']))
+
+        text += 'Reason: Inappropriate: %i (%.2f%% of flags)\n' \
+            % (counts['inappropriate'],
+               avg(counts['inappropriate'], counts['total_flagged']))
+
+        text += 'Reason: Contact info: %i (%.2f%% of flags)\n' \
+            % (counts['contact_info'],
+               avg(counts['contact_info'], counts['total_flagged']))
+
+        text += 'Reason: Other: %i (%.2f%% of flags)\n' \
+            % (counts['other'],
+               avg(counts['other'], counts['total_flagged']))
         text += '```\n'
 
         token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
