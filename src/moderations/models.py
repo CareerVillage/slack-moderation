@@ -16,7 +16,7 @@ class Moderation(models.Model):
     """
     Record Moderation request from client service
     """
-    content_key = models.TextField(unique=True)
+    content_key = models.TextField()
     content = models.TextField()
     content_author_id = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
