@@ -48,17 +48,23 @@ def get_leaderboard():
         elif action.action == 'resolve':
             all_time_resolution_time.append(action.created_at - action.moderation.created_at)
 
+    def avg(time_list):
+        if time_list:
+            return sum(time_list, timedelta()) / len(time_list)
+        else:
+            return timedelta()
+
     return {
         'all_time': all_time,
         'seven_days': seven_days,
         'avg': {
             'all_time': {
-                'review': (sum(all_time_review_time, timedelta()) / len(all_time_review_time), len(all_time_review_time)),
-                'resolution': (sum(all_time_resolution_time, timedelta()) / len(all_time_resolution_time), len(all_time_resolution_time)),
+                'review': (avg(all_time_review_time), len(all_time_review_time)),
+                'resolution': (avg(all_time_resolution_time), len(all_time_resolution_time)),
             },
             'seven_days': {
-                'review': (sum(seven_days_review_time, timedelta()) / len(seven_days_review_time), len(seven_days_review_time)),
-                'resolution': (sum(seven_days_resolution_time, timedelta()) / len(seven_days_resolution_time), len(seven_days_resolution_time)),
+                'review': (avg(seven_days_review_time), len(seven_days_review_time)),
+                'resolution': (avg(seven_days_resolution_time), len(seven_days_resolution_time)),
             },
         },
         'counts': counts,
