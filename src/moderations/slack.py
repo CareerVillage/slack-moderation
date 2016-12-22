@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import json
+import re
 import requests
 from django.http import HttpResponse
 from accounts.models import AuthToken
@@ -165,6 +166,19 @@ class SlackSdk(object):
         is_image = False
         if 'https://res.cloudinary.com/' in text:
             is_image = True
+
+        if len(text) >= 4000:
+            search_text = re.findall(
+                '^(.* posted the) <(https://.*)\|(.*)> .*:\n',
+                text
+            )
+            if search_text:
+                new_content_text = search_text[0][0]
+                link = search_text[0][1]
+                new_content_type = search_text[0][2]
+                text = '%s %s. WARNING: this content cannot be displayed, ' \
+                       'please read the complete content <%s|HERE>' \
+                       % (new_content_text, new_content_type, link)
 
         params = {
             'token': access_token,
