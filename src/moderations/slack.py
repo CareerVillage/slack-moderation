@@ -61,7 +61,7 @@ class SlackSdk(object):
         """
 
         def render_board(leaderboard, title):
-            text = '┌──────────────────────┬──────────────────────┐\n'
+            text = '┌----------------------┬----------------------┐\n'
             text += '│ {0: <20} | {1: <20} │\n'.format('Mod', title)
 
             sorted_leaderboard = sorted(leaderboard.items(),
@@ -69,10 +69,10 @@ class SlackSdk(object):
                                         reverse=True)
             for k, v in sorted_leaderboard:
                 if k:
-                    text += '├──────────────────────┼──────────────────────┤\n'
+                    text += '├----------------------┼----------------------┤\n'
                     text += '│ {0: <20} │ {1: <20} │\n'.format(k, v)
 
-            text += '└──────────────────────┴──────────────────────┘\n'
+            text += '└----------------------┴----------------------┘\n'
             return text
 
         def timedelta_to_str(td):
