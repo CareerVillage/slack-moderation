@@ -16,10 +16,13 @@ class SlackSdk(object):
         auth_token_object = AuthToken.objects.filter(
             service_name='slack', service_entity_auth_name=channel
         ).first()
-        channel_id = auth_token_object.service_entity_auth_id
-        token = auth_token_object.service_auth_token
+        if auth_token_object:
+            channel_id = auth_token_object.service_entity_auth_id
+            token = auth_token_object.service_auth_token
 
-        return token, channel_id
+            return token, channel_id
+        else:
+            return None, None
 
     @staticmethod
     def post_moderation(text):
@@ -48,10 +51,18 @@ class SlackSdk(object):
         ]
 
         token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-        response = SlackSdk.create_message(token,
-                                           channel_id, text, attachments)
+        if channel_id:
+            response = SlackSdk.create_message(token,
+                                               channel_id, text, attachments)
 
-        return response.json()
+            return response.json()
+        else:
+            data = {
+                'success': False,
+                'message': "{} is not a valid channel or "
+                           "was not previously authorized".format(channel_id)
+            }
+            return data
 
     @staticmethod
     def post_leaderboard(leaderboard):
