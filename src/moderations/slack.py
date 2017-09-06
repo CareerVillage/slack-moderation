@@ -168,7 +168,7 @@ class SlackSdk(object):
 
         if len(text) >= 3500:
             search_text = re.findall(
-                '^(.* posted the) <(https://.*)\|(.*)> .*:\n',
+                '^(.* posted the) <(https://.*)\|(.*)>.*:\n',
                 text
             )
             if search_text:
