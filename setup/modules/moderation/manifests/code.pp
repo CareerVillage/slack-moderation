@@ -1,7 +1,6 @@
 class moderation::code ($user, $group, $source_dir) {
 
     $git_repo   = "${::moderation_git_repo}"
-    $git_branch = "${::moderation_git_branch}"
     $git_key = "moderation_git"
 
     file {
@@ -28,7 +27,7 @@ class moderation::code ($user, $group, $source_dir) {
         ensure   => latest,
         provider => git,
         source   => "${git_repo}",
-        revision => "${git_branch}",
+        revision => "master",
         owner    => $user,
         user     => $user,
         group    => $group,
