@@ -157,7 +157,7 @@ class SlackSdk(object):
 
         token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
         return SlackSdk.create_message(token, channel_id,
-                                       text, [], in_channel=True)
+                                       text, [], in_channel=True, async=True)
 
     @staticmethod
     def create_message(access_token, channel_id,
