@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from accounts.models import AuthToken
 from moderations.models import Moderation, ModerationAction
 from moderations.utils import timedelta_to_str
+from .tasks import async_get_request
 
 
 class SlackSdk(object):
@@ -156,11 +157,11 @@ class SlackSdk(object):
 
         token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
         return SlackSdk.create_message(token, channel_id,
-                                       text, [], in_channel=True)
+                                       text, [], in_channel=True, async=True)
 
     @staticmethod
     def create_message(access_token, channel_id,
-                       text='', attachments=[], in_channel=False):
+                       text='', attachments=[], in_channel=False, async=False):
 
         is_image = False
         if 'https://res.cloudinary.com/' in text:
@@ -190,37 +191,33 @@ class SlackSdk(object):
         if in_channel:
             params['response_type'] = 'in_channel'
 
-        return requests.get(
-            url='https://slack.com/api/chat.postMessage',
-            params=params
-        )
+        if not async:
+            return requests.get(url='https://slack.com/api/chat.postMessage', params=params)
+        else:
+            return async_get_request(url='https://slack.com/api/chat.postMessage', params=params)
 
     @staticmethod
     def delete_message(access_token, channel_id, ts):
-        return requests.get(
-            url='https://slack.com/api/chat.delete',
-            params={
-                'token': access_token,
-                'ts': ts,
-                'channel': channel_id,
-            }
-        )
+        return async_get_request(url='https://slack.com/api/chat.delete',
+                                 params={
+                                     'token': access_token,
+                                     'ts': ts,
+                                     'channel': channel_id,
+                                 })
 
     @staticmethod
     def update_message(access_token, channel_id, ts,
                        text='', attachments=[]):
 
-        return requests.get(
-            url='https://slack.com/api/chat.update',
-            params={
-                'token': access_token,
-                'ts': ts,
-                'channel': channel_id,
-                'text': text,
-                'attachments': json.dumps(attachments),
-                'parse': 'none',
-            }
-        )
+        return async_get_request(url='https://slack.com/api/chat.update',
+                                 params={
+                                     'token': access_token,
+                                     'ts': ts,
+                                     'channel': channel_id,
+                                     'text': text,
+                                     'attachments': json.dumps(attachments),
+                                     'parse': 'none',
+                                 })
 
 
 def mod_inbox_approved(data, moderation):
@@ -314,10 +311,7 @@ def mod_inbox_reject(data, moderation):
     ]
 
     token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-    response = SlackSdk.update_message(token, channel_id, ts,
-                                       text=text, attachments=attachments)
-
-    data = response.json()
+    SlackSdk.update_message(token, channel_id, ts, text=text, attachments=attachments)
 
     return HttpResponse('')
 
