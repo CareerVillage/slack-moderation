@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'social.apps.django_app.default',
     'accounts',
     'moderations',
+    'background_task',
 ]
 
 MIDDLEWARE = [
