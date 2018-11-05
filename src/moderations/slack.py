@@ -198,30 +198,26 @@ class SlackSdk(object):
 
     @staticmethod
     def delete_message(access_token, channel_id, ts):
-        return requests.get(
-            url='https://slack.com/api/chat.delete',
-            params={
-                'token': access_token,
-                'ts': ts,
-                'channel': channel_id,
-            }
-        )
+        return async_get_request(url='https://slack.com/api/chat.delete',
+                                 params={
+                                     'token': access_token,
+                                     'ts': ts,
+                                     'channel': channel_id,
+                                 })
 
     @staticmethod
     def update_message(access_token, channel_id, ts,
                        text='', attachments=[]):
 
-        return requests.get(
-            url='https://slack.com/api/chat.update',
-            params={
-                'token': access_token,
-                'ts': ts,
-                'channel': channel_id,
-                'text': text,
-                'attachments': json.dumps(attachments),
-                'parse': 'none',
-            }
-        )
+        return async_get_request(url='https://slack.com/api/chat.update',
+                                 params={
+                                     'token': access_token,
+                                     'ts': ts,
+                                     'channel': channel_id,
+                                     'text': text,
+                                     'attachments': json.dumps(attachments),
+                                     'parse': 'none',
+                                 })
 
 
 def mod_inbox_approved(data, moderation):
