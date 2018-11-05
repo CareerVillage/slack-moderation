@@ -311,10 +311,7 @@ def mod_inbox_reject(data, moderation):
     ]
 
     token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-    response = SlackSdk.update_message(token, channel_id, ts,
-                                       text=text, attachments=attachments)
-
-    data = response.json()
+    SlackSdk.update_message(token, channel_id, ts, text=text, attachments=attachments)
 
     return HttpResponse('')
 
