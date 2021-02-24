@@ -1,3 +1,2 @@
-boto
-fabric
+setuptools==40.6.3
 -r base.pip

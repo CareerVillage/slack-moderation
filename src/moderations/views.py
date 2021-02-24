@@ -1,9 +1,10 @@
+import time
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Moderation, ModerationAction
 from .serializers import ModerationSerializer
-from .slack import SlackSdk, moderate
+from .slack import SlackSdk, moderate, mod_inbox_approved, mod_inbox_reject_reason
 from .stats import get_leaderboard
 from .tasks import post_moderation_async
 
@@ -37,6 +38,27 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
         ModerationAction.objects.create(moderation=moderation,
                                         action='moderate')
+
+        data_for_mod_bot = {
+                'original_message': {
+                    'text': data['content']
+                },
+                'user': {
+                    'name': 'ModBot'
+                },
+                'action_ts': str(time.time()),
+                'actions': [
+                    {
+                        'value': 'Other'
+                    }
+                ],
+                'message_ts': Moderation.objects.get(id=moderation.id).message_id,
+            }
+
+        if data['auto_approve']:
+            mod_inbox_approved(data_for_mod_bot, moderation)
+        elif data['auto_flag']:
+            mod_inbox_reject_reason(data_for_mod_bot, moderation)
 
 
 @api_view(['POST'])

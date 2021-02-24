@@ -18,7 +18,7 @@ define python::venv ($requirements, $user, $group) {
     }
 
     exec { "python::venv ${name} update":
-        command => "${name}/bin/pip install -U distribute",
+        command => "${name}/bin/pip install distribute",
         refreshonly => true;
     }
 
