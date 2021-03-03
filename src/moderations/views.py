@@ -16,6 +16,16 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
     """
     queryset = ModerationAction.objects.all()
     serializer_class = ModerationSerializer
+    
+    def list(self, request):
+        content_id = self.request.query_params.get('contentId', None)
+        if not content_id is None:
+            queryset = ModerationAction.objects.filter(moderation__content_key=content_id)
+        else:
+            queryset = ModerationAction.objects.filter(pk=1)
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         """Override method in order to include interaction with Slack
@@ -24,12 +34,19 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         """
         data = serializer.validated_data
 
+        slack = SlackSdk()
+        response_data = slack.post_moderation(
+            text=data['content'])
+
+        message_id = response_data.get('ts')
+
         moderation = Moderation.objects.create(
             content_key=data['content_key'],
             content=data['content'],
             content_author_id=data['content_author_id'],
             status='#modinbox',
-            status_reason='moderate'
+            status_reason='moderate',
+            message_id=message_id
         )
         post_moderation_async(moderation_id=moderation.id, data=data)
 
