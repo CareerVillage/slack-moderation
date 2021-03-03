@@ -5,6 +5,7 @@ from .models import Moderation, ModerationAction
 from .serializers import ModerationSerializer
 from .slack import SlackSdk, moderate
 from .stats import get_leaderboard
+from .tasks import post_moderation_async
 
 
 class ModerationActionModelViewSet(viewsets.ModelViewSet):
@@ -34,20 +35,15 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         """
         data = serializer.validated_data
 
-        slack = SlackSdk()
-        response_data = slack.post_moderation(
-            text=data['content'])
-
-        message_id = response_data.get('ts')
-
         moderation = Moderation.objects.create(
             content_key=data['content_key'],
             content=data['content'],
             content_author_id=data['content_author_id'],
             status='#modinbox',
-            status_reason='moderate',
-            message_id=message_id
+            status_reason='moderate'
         )
+        post_moderation_async(moderation_id=moderation.id, data=data)
+
         serializer.moderation = moderation
 
         ModerationAction.objects.create(moderation=moderation,

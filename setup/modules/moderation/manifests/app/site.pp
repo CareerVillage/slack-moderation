@@ -11,6 +11,26 @@ class moderation::app::site ($role) {
         creates => "/etc/ntp.conf",
         require => Package["ntp"];
     }
+
+    if $moderation::target == 'pro' {
+
+        file { "${moderation::extras_dir}/send_stats_to_gspread.sh":
+            owner   => $user,
+            group   => $group,
+            mode    => "755",
+            content => template("${module_name}/app/send_stats_to_gspread.sh.erb"),
+            require => Class["moderation"];
+        }
+
+        cron { "moderation::app::site::send_stats_to_gspread":
+            command => "${moderation::extras_dir}/send_stats_to_gspread.sh",
+            user    => $user,
+            hour    => 1, # 5pm (1 UTC)
+            minute  => 00,
+            weekday => 1,
+            require => File["${moderation::extras_dir}/send_stats_to_gspread.sh"];
+        }
+    }
     
     if $moderation::target != 'dev' {
         file {

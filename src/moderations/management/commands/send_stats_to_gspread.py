@@ -21,6 +21,7 @@ class Command(BaseCommand):
             hours = timedelta_object.days * 24
             seconds = timedelta_object.seconds
             fraction_of_hour = seconds / 3600.0
+
             print hours, fraction_of_hour
             return hours + fraction_of_hour
 
