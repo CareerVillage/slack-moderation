@@ -2,13 +2,35 @@
 
 from datetime import datetime
 import json
+import pprint
 import re
 import requests
+import traceback
 from django.http import HttpResponse
 from accounts.models import AuthToken
 from moderations.models import Moderation, ModerationAction
 from moderations.utils import timedelta_to_str
 from .tasks import async_get_request
+
+pp = pprint.PrettyPrinter(indent=4)
+
+
+# Code this logic in a separate class that can be overwritten.
+PRO_TIP_QUESTIONS = [
+    "ProTip #1: Is this answer direct?",
+    "ProTip #2: Is this answer comprehensive?",
+    "ProTip #3: Does this answer use facts?",
+    "ProTip #4: Does this answer tell a personal story?",
+    "ProTip #5: Does this answer recommend next steps?",
+    "ProTip #6: Does this answer cite sources?",
+    "ProTip #7: Does this answer strike the right tone?",
+    "ProTip #8: Does this answer use proper grammar, formatting, and structure?",
+    "ProTip #9: Does this answer anticipate the student’s needs?",
+    "ProTip #10: Is this answer concise?",
+]
+
+BEST_OF_THE_VILLAGE_THRESHOLD = 9
+SUMMARY_TITLE = "ProTip Rating:"
 
 
 class SlackSdk(object):
@@ -64,6 +86,7 @@ class SlackSdk(object):
                 'message': "{} is not a valid channel or "
                            "was not previously authorized".format(channel_id)
             }
+
             return data
 
     @staticmethod
@@ -89,7 +112,6 @@ class SlackSdk(object):
             text += '└----------------------┴----------------------┘\n'
             return text
 
-
         def avg(a, b):
             if b > 0.0:
                 return a/float(b) * 100.0
@@ -100,16 +122,21 @@ class SlackSdk(object):
             "LEADERBOARD as of {date}\n"
             "```\n"
             "{all_time}\n"
-            "{seven_days}\n"
             "```\n"
         )
         text = text.format(
             date=datetime.utcnow(),
             all_time=render_board(leaderboard['all_time'], 'All Time'),
-            seven_days=render_board(leaderboard['seven_days'], 'Last 7 Days')
         )
 
-        text += 'MOD TEAM SPEED REPORT AS OF {} UTC\n'.format(datetime.utcnow())
+        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
+        SlackSdk.create_message(token, channel_id, text, [], in_channel=True)
+
+        text = "```\n{seven_days}\n```\n"
+        text = text.format(seven_days=render_board(leaderboard['seven_days'], 'Last 7 Days'))
+        SlackSdk.create_message(token, channel_id, text, [], in_channel=True)
+
+        text = 'MOD TEAM SPEED REPORT AS OF {} UTC\n'.format(datetime.utcnow())
         text += '```\n'
         text += 'Average time to first mod review (all-time): %s over %i pieces of content\n' \
             % (timedelta_to_str(leaderboard['avg']['all_time']['review'][0]),
@@ -163,38 +190,42 @@ class SlackSdk(object):
     def create_message(access_token, channel_id,
                        text='', attachments=[], in_channel=False, async=False):
 
-        is_image = False
-        if 'https://res.cloudinary.com/' in text:
-            is_image = True
+        try:
 
-        if len(text) >= 3500:
-            search_text = re.findall(
-                '^(.* posted the) <(https://.*)\|(.*)>.*:\n',
-                text
-            )
-            if search_text:
-                new_content_text = search_text[0][0]
-                link = search_text[0][1]
-                new_content_type = search_text[0][2]
-                text = '%s %s. WARNING: this content cannot be displayed, ' \
-                       'please read the complete content <%s|HERE>' \
-                       % (new_content_text, new_content_type, link)
+            is_image = False
+            if 'https://res.cloudinary.com/' in text:
+                is_image = True
 
-        params = {
-            'token': access_token,
-            'channel': channel_id,
-            'text': text,
-            'attachments': json.dumps(attachments),
-            'unfurl_links': False,
-            'unfurl_media': is_image,
-        }
-        if in_channel:
-            params['response_type'] = 'in_channel'
+            if len(text) >= 3500:
+                search_text = re.findall(
+                    '^(.* posted the) <(https://.*)\|(.*)>.*:\n',
+                    text
+                )
+                if search_text:
+                    new_content_text = search_text[0][0]
+                    link = search_text[0][1]
+                    new_content_type = search_text[0][2]
+                    text = '%s %s. WARNING: this content cannot be displayed, ' \
+                           'please read the complete content <%s|HERE>' \
+                           % (new_content_text, new_content_type, link)
 
-        if not async:
-            return requests.get(url='https://slack.com/api/chat.postMessage', params=params)
-        else:
-            return async_get_request(url='https://slack.com/api/chat.postMessage', params=params)
+            params = {
+                'token': access_token,
+                'channel': channel_id,
+                'text': text,
+                'attachments': json.dumps(attachments),
+                'unfurl_links': False,
+                'unfurl_media': is_image,
+            }
+            if in_channel:
+                params['response_type'] = 'in_channel'
+
+            if not async:
+                return requests.get(url='https://slack.com/api/chat.postMessage', params=params)
+            else:
+                return async_get_request(url='https://slack.com/api/chat.postMessage', params=params)
+        except:
+            print traceback.format_exe()
 
     @staticmethod
     def delete_message(access_token, channel_id, ts):
@@ -218,6 +249,11 @@ class SlackSdk(object):
                                      'attachments': json.dumps(attachments),
                                      'parse': 'none',
                                  })
+
+
+def is_answer(text):
+    return 'posted the' in text and \
+                'answer' in text and 'in response to' in text
 
 
 def mod_inbox_approved(data, moderation):
@@ -244,16 +280,303 @@ def mod_inbox_approved(data, moderation):
     ]
 
     token, channel_id = SlackSdk.get_channel_data('#mod-approved')
+    print 'Channel: ', channel_id
     response = SlackSdk.create_message(token, channel_id, text, attachments)
+    print 'Reponse: ', response.status_code
     if response.status_code == 200:
         data = response.json()
+        print 'Data: ', data
         if data.get('ok'):
             token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
+            print 'save moderation action'
             save_moderation_action(moderation, approved_by, channel_id,
                                    'approve', data.get('ts'))
-            reponse = SlackSdk.delete_message(token, channel_id, ts)
+            print 'Delete message -> '
+            response = SlackSdk.delete_message(token, channel_id, ts)
+            print 'Response ', response
+
+            if is_answer(text):
+                send_to_approved_advice(data, moderation)
 
     return HttpResponse('')
+
+
+def send_to_approved_advice(data, moderation):
+
+    try:
+
+        attachments = []
+        for question_index, question in enumerate(PRO_TIP_QUESTIONS):
+            attachment = {
+                'fallback': "Moderator actions",
+                'callback_id': 'mod-approved-advice',
+                'text': question,
+                'attachment_type': 'default',
+                'actions': [
+                    {
+                        'name': 'yes',
+                        'text': "Yes",
+                        'type': 'button',
+                        'value': 'pro-tip-yes-{}'.format(question_index),
+                        'style': 'primary'
+                    },
+                    {
+                        'name': 'no',
+                        'text': "No",
+                        'type': 'button',
+                        'value': 'pro-tip-no-{}'.format(question_index)
+                    }
+                ]
+            }
+
+            attachments.append(attachment)
+
+        attachment = {
+            'fallback': "Moderator actions",
+            'callback_id': 'mod-approved-advice',
+            'title': SUMMARY_TITLE,
+            'text': "You have currently positively marked {} out of {} ProTips".format(0, len(PRO_TIP_QUESTIONS)),
+            'attachment_type': 'default',
+        }
+        attachments.append(attachment)
+
+        text = data.get('message').get('text')
+        token, channel_id = SlackSdk.get_channel_data('#approved-advice')
+        response = SlackSdk.create_message(token, channel_id, text, attachments)
+    except:
+        print traceback.format_exc()
+
+
+def mod_pro_tip(data, moderation, current_question_index, response):
+
+    try:
+
+        original_message = data.get('original_message')
+        text = original_message.get('text')
+        ts = data.get('message_ts')
+
+        attachments = []
+        summary = None
+        answer_count = 0
+        yes_count = 1 if response == 'yes' else 0
+        for question_index, attachment in enumerate(
+                original_message.get('attachments')):
+
+            # count partial results
+            actions = attachment.get('actions')
+            if actions:
+                action = actions[0]
+                value = action['value']
+                if 'pro-tip-change' in value:
+                    answer_count += 1
+                    if 'yes' in value:
+                        yes_count += 1
+
+            print '--------------------'
+            pp.pprint(attachment)
+
+            if attachment.get('title') == SUMMARY_TITLE:
+                summary = attachment
+
+            if current_question_index == question_index:
+                if response in ['yes', 'no']:
+                    actions = [
+                        {
+                            'name': 'change',
+                            'text': "Change your response ({})".format(response),
+                            'type': 'button',
+                            'value': 'pro-tip-change-{}-{}'.format(response, question_index),
+                            'style': 'primary'
+                        }
+                    ]
+                else:
+                    actions = [
+                        {
+                            'name': 'yes',
+                            'text': "Yes",
+                            'type': 'button',
+                            'value': 'pro-tip-yes-{}'.format(question_index),
+                            'style': 'primary'
+                        },
+                        {
+                            'name': 'no',
+                            'text': "No",
+                            'type': 'button',
+                            'value': 'pro-tip-no-{}'.format(question_index)
+                        }
+                    ]
+                attachment_data = {
+                    'fallback': "Moderator actions",
+                    'callback_id': 'mod-approved-advice',
+                    'text': PRO_TIP_QUESTIONS[question_index],
+                    'attachment_type': 'default',
+                    'actions': actions,
+                }
+                attachments.append(attachment_data)
+            else:
+                attachments.append(attachment)
+
+        print '-------------------------------'
+        print 'Attachments: (before lambda)'
+        pp.pprint(attachments)
+
+        attachments = filter(lambda item: item.get('title') != SUMMARY_TITLE,
+                             attachments)
+
+        print '-------------------------------'
+        print 'Attachments: (before summary)'
+        pp.pprint(attachments)
+
+        print '******************** Yes Count:'
+        print yes_count
+        print '********* summary (old)'
+        print summary['text']
+
+        summary['text'] = "You have currently positively marked " + str(yes_count) + " out of 10 ProTips"
+
+        if answer_count == len(PRO_TIP_QUESTIONS) - 1 and \
+                response in ['yes', 'no']:
+            actions = [
+                {
+                    'name': 'submit',
+                    'text': "Submit your review",
+                    'type': 'button',
+                    'value': 'pro-tip-submit',
+                    'style': 'primary'
+                }
+            ]
+            summary['actions'] = actions
+        else:
+            if 'actions' in summary:
+                del summary['actions']
+
+        attachments.append(summary)
+
+        print '-------------------------------'
+        print 'Attachments: (after summary)'
+        pp.pprint(attachments)
+
+        token, channel_id = SlackSdk.get_channel_data('#approved-advice')
+        SlackSdk.update_message(token, channel_id,
+                                ts, text=text, attachments=attachments)
+
+    except:
+        print traceback.format_exc()
+
+
+def mod_submit(data, moderation):
+
+    try:
+
+        original_message = data.get('original_message')
+        text = original_message.get('text')
+        ts = data.get('message_ts')
+
+        yes_count = 0
+        for question_index, attachment in enumerate(
+                original_message.get('attachments')):
+
+            # count partial results
+            actions = attachment.get('actions')
+            if actions:
+                action = actions[0]
+                value = action['value']
+                if 'pro-tip-change' in value:
+                    if 'yes' in value:
+                        yes_count += 1
+
+        reviewed_by = data.get('user').get('name')
+        reviewed_time = float(data.get('action_ts').split('.')[0])
+        reviewed_time = datetime.utcfromtimestamp(reviewed_time)
+        reviewed_time = reviewed_time.strftime('%Y-%m-%d %I:%M%p')
+        message_ts = data.get('message_ts')
+
+        attachments = [
+            {
+                'fallback': 'Please moderate this.',
+                'text': '%s UTC: @%s reviewed this advice' %
+                        (reviewed_time, reviewed_by),
+                'callback_id': 'mod-approved-advice',
+                'attachment_type': 'default',
+                'mrkdwn_in': [
+                    'text'
+                ]
+            }
+        ]
+
+        if yes_count >= BEST_OF_THE_VILLAGE_THRESHOLD:
+            channel_id = '#best-of-village'
+
+            actions = [
+                {
+                    'name': 'submit',
+                    'text': "Approve",
+                    'type': 'button',
+                    'value': 'pro-tip-approve',
+                    'style': 'primary'
+                }
+            ]
+
+            attachments[0]['actions'] = actions
+
+        else:
+            channel_id = '#quality-assessed'
+
+        token, channel_id = SlackSdk.get_channel_data(channel_id)
+        response = SlackSdk.create_message(token, channel_id, text=text,
+                                           attachments=attachments)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('ok'):
+                token, channel_id = SlackSdk.get_channel_data('#approved-advice')
+                ts = data.get('ts')
+
+                SlackSdk.delete_message(token, channel_id, message_ts)
+
+        return HttpResponse('')
+
+    except:
+        print traceback.format_exc()
+
+
+def mod_approve(data, moderation):
+
+    try:
+
+        original_message = data.get('original_message')
+        text = original_message.get('text')
+        approved_by = data.get('user').get('name')
+        approved_time = float(data.get('action_ts').split('.')[0])
+        approved_time = datetime.utcfromtimestamp(approved_time)
+        approved_time = approved_time.strftime('%Y-%m-%d %I:%M%p')
+        attachment = original_message.get('attachments')[0]
+        ts = data.get('message_ts')
+
+        attachment['actions'] = []
+        attachments = [
+            attachment,
+            {
+                "fallback": "Please moderate this.",
+                "text": ":white_check_mark: _Approved by @%s %s UTC_" %
+                        (approved_by, approved_time),
+                "callback_id": "mod-approved",
+                "attachment_type": "default",
+                "mrkdwn_in": [
+                    "text"
+                ]
+            }
+        ]
+
+
+        token, channel_id = SlackSdk.get_channel_data('#best-of-village')
+        response = SlackSdk.update_message(token, channel_id, ts,
+                                           text=text, attachments=attachments)
+
+        return HttpResponse('')
+
+    except:
+        print traceback.format_exc()
 
 
 def mod_inbox_reject(data, moderation):
@@ -264,47 +587,47 @@ def mod_inbox_reject(data, moderation):
 
     attachments = [
         {
-            "fallback": "Moderator actions",
-            "text": "_Reject: Select a reason_",
-            "callback_id": "mod-inbox",
-            "attachment_type": "default",
-            "mrkdwn_in": [
-                "text"
+            'fallback': 'Moderator actions',
+            'text': '_Reject: Select a reason_',
+            'callback_id': 'mod-inbox',
+            'attachment_type': 'default',
+            'mrkdwn_in': [
+                'text'
             ],
-            "actions": [
+            'actions': [
                 {
-                    "name": "Off topic",
-                    "text": "Off topic",
-                    "type": "button",
-                    "value": "off_topic",
-                    "style": "danger"
+                    'name': 'Off topic',
+                    'text': 'Off topic',
+                    'type': 'button',
+                    'value': 'off_topic',
+                    'style': 'danger'
                 },
                 {
-                    "name": "Inappropriate",
-                    "text": "Inappropriate",
-                    "type": "button",
-                    "value": "inappropriate",
-                    "style": "danger"
+                    'name': 'Inappropriate',
+                    'text': 'Inappropriate',
+                    'type': 'button',
+                    'value': 'inappropriate',
+                    'style': 'danger'
                 },
                 {
-                    "name": "Contact info",
-                    "text": "Contact info",
-                    "type": "button",
-                    "value": "contact_info",
-                    "style": "danger"
+                    'name': 'Contact info',
+                    'text': 'Contact info',
+                    'type': 'button',
+                    'value': 'contact_info',
+                    'style': 'danger'
                 },
                 {
-                    "name": "Other",
-                    "text": "Other",
-                    "type": "button",
-                    "value": "other",
-                    "style": "danger"
+                    'name': 'Other',
+                    'text': 'Other',
+                    'type': 'button',
+                    'value': 'other',
+                    'style': 'danger'
                 },
                 {
-                    "name": "Undo",
-                    "text": "Undo",
-                    "type": "button",
-                    "value": "undo"
+                    'name': 'Undo',
+                    'text': 'Undo',
+                    'type': 'button',
+                    'value': 'undo'
                 }
             ]
         }
@@ -323,22 +646,22 @@ def mod_inbox_reject_undo(data):
 
     attachments = [
         {
-            "fallback": "Moderator actions",
-            "callback_id": "mod-inbox",
-            "attachment_type": "default",
-            "actions": [
+            'fallback': 'Moderator actions',
+            'callback_id': 'mod-inbox',
+            'attachment_type': 'default',
+            'actions': [
                 {
-                    "name": "approve",
-                    "text": "Approve",
-                    "type": "button",
-                    "value": "approve",
-                    "style": "primary"
+                    'name': 'approve',
+                    'text': 'Approve',
+                    'type': 'button',
+                    'value': 'approve',
+                    'style': 'primary'
                 },
                 {
-                    "name": "reject",
-                    "text": "Reject",
-                    "type": "button",
-                    "value": "reject"
+                    'name': 'reject',
+                    'text': 'Reject',
+                    'type': 'button',
+                    'value': 'reject'
                 }
             ]
         }
@@ -363,21 +686,19 @@ def mod_inbox_reject_reason(data, moderation):
 
     attachments = [
         {
-            "fallback": "Moderator actions",
-            "text": "_%s UTC: @%s rejected this with the reason: \"%s\"_" %
+            'fallback': 'Moderator actions',
+            'text': '_%s UTC: @%s rejected this with the reason: \'%s\'_' %
                     (rejected_time, rejected_by, rejected_reason),
-            "callback_id": "mod-flagged",
-            "attachment_type": "default",
-            "mrkdwn_in": [
-                "text"
-            ],
-            "actions": [
+            'callback_id': 'mod-flagged',
+            'attachment_type': 'default',
+            'mrkdwn_in': ['text'],
+            'actions': [
                 {
-                    "name": "Resolve",
-                    "text": "Mark resolved",
-                    "type": "button",
-                    "value": "resolve",
-                    "style": "primary"
+                    'name': 'Resolve',
+                    'text': 'Mark resolved',
+                    'type': 'button',
+                    'value': 'resolve',
+                    'style': 'primary'
                 }
             ]
         }
@@ -418,6 +739,29 @@ def mod_inbox(data, action, moderation):
         return mod_inbox_reject_reason(data, moderation)
 
 
+def mod_approved_advice(data, action, moderation):
+
+    try:
+        if action.startswith('pro-tip-yes') or \
+                action.startswith('pro-tip-no') or \
+                action.startswith('pro-tip-change'):
+            question_index = int(action[-1])
+            response = action[:-2].replace('pro-tip-', '')
+
+            return mod_pro_tip(data, moderation, question_index, response)
+
+        if action == 'pro-tip-submit':
+
+            return mod_submit(data, moderation)
+
+        elif action == 'pro-tip-approve':
+
+            return mod_approve(data, moderation)
+
+    except:
+        print traceback.format_exc()
+
+
 def mod_flagged_resolve(data, moderation):
     original_message = data.get('original_message')
     text = original_message.get('text')
@@ -430,13 +774,13 @@ def mod_flagged_resolve(data, moderation):
 
     attachments = [
         {
-            "fallback": "Please moderate this.",
-            "text": "%s\n_%s UTC: @%s marked this \"Resolved\"_" %
+            'fallback': 'Please moderate this.',
+            'text': '%s\n_%s UTC: @%s marked this \'Resolved\'_' %
                     (rejected_reason, resolved_time, resolved_by),
-            "callback_id": "mod-resolved",
-            "attachment_type": "default",
-            "mrkdwn_in": [
-                "text"
+            'callback_id': 'mod-resolved',
+            'attachment_type': 'default',
+            'mrkdwn_in': [
+                'text'
             ]
         }
     ]
@@ -468,20 +812,22 @@ def mod_flagged(data, action, moderation):
 
 def save_moderation_action(moderation, username, channel_id,
                            action, message_id):
-    moderation.status = channel_id
-    moderation.status_reason = action
-    moderation.message_id = message_id
-    moderation.save()
-    ModerationAction.objects.create(moderation=moderation,
-                                    action=action,
-                                    action_author_id=username)
+    if moderation:
+        moderation.status = channel_id
+        moderation.status_reason = action
+        moderation.message_id = message_id
+        moderation.save()
+        ModerationAction.objects.create(moderation=moderation,
+                                        action=action,
+                                        action_author_id=username)
 
 
 def moderate(data):
-    """
+    """"
     """
     data = data.get('payload')
     data = json.loads(data)
+    print data
     if data:
 
         action = data.get('actions')[0].get('value')
@@ -493,7 +839,8 @@ def moderate(data):
 
         if callback_id == 'mod-inbox':
             return mod_inbox(data, action, moderation)
-
+        if callback_id == 'mod-approved-advice':
+            return mod_approved_advice(data, action, moderation)
         elif callback_id == 'mod-flagged':
             return mod_flagged(data, action, moderation)
 
