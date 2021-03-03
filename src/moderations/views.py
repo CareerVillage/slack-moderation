@@ -16,6 +16,17 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
     queryset = ModerationAction.objects.all()
     serializer_class = ModerationSerializer
 
+    def list(self, request):
+        content_id = self.request.query_params.get('contentId', None)
+        if not content_id is None:
+            queryset = ModerationAction.objects.filter(moderation__content_key=content_id)
+        else:
+            queryset = ModerationAction.objects.filter(pk=1)
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data)
+        
+
     def perform_create(self, serializer):
         """Override method in order to include interaction with Slack
            Save moderation to database
