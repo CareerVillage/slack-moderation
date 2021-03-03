@@ -1,5 +1,5 @@
 import requests
-from .slack import SlackSdk
+from background_task import background
 from .models import Moderation
 
 
@@ -7,8 +7,10 @@ from .models import Moderation
 def async_get_request(url, params):
     return requests.get(url, params)
 
+
 @background(schedule=10)
 def post_moderation_async(moderation_id, data):
+    from .slack import SlackSdk
     slack = SlackSdk()
     response_data = slack.post_moderation(
         text=data['content'])
