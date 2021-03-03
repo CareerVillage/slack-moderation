@@ -1,6 +1,8 @@
 
 
 def timedelta_to_str(td):
+    print '******************'
+    print td
     result = ''
     td = str(td).split(',')
     if len(td) > 1:

@@ -1,73 +1,94 @@
+
+
 from datetime import timedelta
+from django.db.models import Avg, Count, F
 from django.utils import timezone
-from .models import ModerationAction
+from moderations.models import ModerationAction
 
 
 def get_leaderboard():
     """
     """
 
+    moderation_actions = [
+        'approve',
+        'inappropriate',
+        'contact_info',
+        'other',
+        'off_topic',
+    ]
+
+    flag_actions = [
+        'inappropriate',
+        'contact_info',
+        'other',
+        'off_topic',
+    ]
+
+    actions = ModerationAction.objects.filter(action__in=moderation_actions).values(
+        'action_author_id').annotate(total=Count('action_author_id')).order_by('-total')
+
     all_time = {}
+    for item in actions:
+        all_time[item['action_author_id']] = item['total']
+
+
+    actions = ModerationAction.objects.filter(
+        action__in=moderation_actions, created_at__gte=timezone.now() - timedelta(days=7)).values(
+        'action_author_id').annotate(
+        total=Count('action_author_id')).order_by('-total')
+
     seven_days = {}
-    actions = ModerationAction.objects.all().select_related('moderation')
+    for item in actions:
+        seven_days[item['action_author_id']] = item['total']
 
-    all_time_review_time = []
-    all_time_resolution_time = []
-    seven_days_review_time = []
-    seven_days_resolution_time = []
 
-    counts = {
-        'total': 0,
-        'total_flagged': 0,
-        'off_topic': 0,
-        'inappropriate': 0,
-        'contact_info': 0,
-        'other': 0,
-    }
+    all_time_review_count = ModerationAction.objects.filter(action__in=moderation_actions).count()
+    all_time_review_time_avg = ModerationAction.objects.filter(action__in=moderation_actions).annotate(
+        time_to_approve=F('created_at') - F('moderation__created_at')).values(
+        'action', 'time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
 
-    for action in actions:
-        aid = action.action_author_id
-        all_time.setdefault(aid, 0)
-        all_time[aid] += 1
-        if action.created_at > timezone.now() - timedelta(days=7):
-            seven_days.setdefault(aid, 0)
-            seven_days[aid] += 1
+    all_time_resolution_count = ModerationAction.objects.filter(action='resolve').count()
+    all_time_resolution_time_avg = ModerationAction.objects.filter(action='resolve').annotate(
+        time_to_approve=F('created_at') - F('moderation__created_at')).values(
+        'action', 'time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
 
-            if action.action == 'moderate':
-                counts['total'] += 1
 
-            if action.action in ['off_topic', 'inappropriate',
-                                 'contact_info', 'other']:
-                counts['total_flagged'] += 1
-                counts[action.action] += 1
+    seven_days_review_count = ModerationAction.objects.filter(action__in=moderation_actions, created_at__gte=timezone.now() - timedelta(days=7)).count()
+    seven_days_review_time_avg = ModerationAction.objects.filter(action__in=moderation_actions,  created_at__gte=timezone.now() - timedelta(days=7)).annotate(
+        time_to_approve=F('created_at') - F('moderation__created_at')).values(
+        'action', 'time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
 
-            if action.action in ['approve', 'reject']:
-                seven_days_review_time.append(action.created_at - action.moderation.created_at)
-            elif action.action == 'resolve':
-                seven_days_resolution_time.append(action.created_at - action.moderation.created_at)
+    seven_days_resolution_count = ModerationAction.objects.filter(action='resolve', created_at__gte=timezone.now() - timedelta(days=7)).count()
+    seven_days_resolution_time_avg = ModerationAction.objects.filter(action='resolve', created_at__gte=timezone.now() - timedelta(days=7)).annotate(
+        time_to_approve=F('created_at') - F('moderation__created_at')).values(
+        'action', 'time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
 
-        if action.action in ['approve', 'reject']:
-            all_time_review_time.append(action.created_at - action.moderation.created_at)
-        elif action.action == 'resolve':
-            all_time_resolution_time.append(action.created_at - action.moderation.created_at)
 
-    def avg(time_list):
-        if time_list:
-            return sum(time_list, timedelta()) / len(time_list)
-        else:
-            return timedelta()
+  
+    counts = {}
+    counts['total_flagged'] = 0
+    totals = ModerationAction.objects.values('action').annotate(total=Count('action'))
+    for total in totals:
+        action = total['action']
+        total = total['total']
+        if action == 'moderate':
+            counts['total'] = total
+        elif action in flag_actions:
+            counts['total_flagged'] += total
+            counts[action] = total 
 
     return {
         'all_time': all_time,
         'seven_days': seven_days,
         'avg': {
             'all_time': {
-                'review': (avg(all_time_review_time), len(all_time_review_time)),
-                'resolution': (avg(all_time_resolution_time), len(all_time_resolution_time)),
+                'review': (all_time_review_time_avg, all_time_review_count),
+                'resolution': (all_time_resolution_time_avg, all_time_review_count),
             },
             'seven_days': {
-                'review': (avg(seven_days_review_time), len(seven_days_review_time)),
-                'resolution': (avg(seven_days_resolution_time), len(seven_days_resolution_time)),
+                'review': (seven_days_review_time_avg, seven_days_review_count),
+                'resolution': (seven_days_resolution_time_avg, seven_days_resolution_count),
             },
         },
         'counts': counts,
