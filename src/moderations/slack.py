@@ -97,20 +97,57 @@ class SlackSdk(object):
         ]
         """
 
-        def render_board(leaderboard, title):
-            text = '┌----------------------┬----------------------┐\n'
-            text += '│ {0: <20} | {1: <20} │\n'.format('Mod', title)
+        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
+
+        def post_leaderboard_on_slack(leaderboard, title, text=''):
+            if title == 'all_time':
+                text += (
+                    '```\n'
+                    'ALL TIME LEADERBOARD\n')
+            else:
+                text += (
+                    '```\n'
+                    'LAST WEEK LEADERBOARD\n')
+                
+            text += (
+                '┌----------------------┬----------------------┐\n'
+                '│ {0: <20} | {1: <20} │\n'
+            ).format('Mod', title)
 
             sorted_leaderboard = sorted(leaderboard.items(),
                                         key=lambda x: x[1],
                                         reverse=True)
+
+            count = 0
             for k, v in sorted_leaderboard:
-                if k:
+                if k and k != 'ModBot':
                     text += '├----------------------┼----------------------┤\n'
                     text += '│ {0: <20} │ {1: <20} │\n'.format(k, v)
+    
+                    # Divide the table in multiple messages because it fails if the text/table is too long
+                    count += 1
+                    if count >= 20:
+                        text += '```\n'
+                        SlackSdk.create_message(token, channel_id,
+                                                text, [], in_channel=True, async=True)
+                        count = 0
+                        text = '```\n'
 
             text += '└----------------------┴----------------------┘\n'
-            return text
+            text += '```\n'
+            return SlackSdk.create_message(token, channel_id,
+                                           text, [], in_channel=True, async=True)
+
+        
+
+        # Post on slack both tables
+        post_leaderboard_on_slack(leaderboard['all_time'], 
+                                  'All Time',
+                                  "LEADERBOARD as of {date}\n".format(date=datetime.utcnow())
+                                  )
+        post_leaderboard_on_slack(leaderboard['seven_days'], 
+                                  'Last 7 Days'
+                                  )
 
         def avg(a, b):
             if b > 0.0:
@@ -118,24 +155,7 @@ class SlackSdk(object):
             else:
                 return 0
 
-        text = (
-            "LEADERBOARD as of {date}\n"
-            "```\n"
-            "{all_time}\n"
-            "```\n"
-        )
-        text = text.format(
-            date=datetime.utcnow(),
-            all_time=render_board(leaderboard['all_time'], 'All Time'),
-        )
-
-        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
-        SlackSdk.create_message(token, channel_id, text, [], in_channel=True)
-
-        text = "```\n{seven_days}\n```\n"
-        text = text.format(seven_days=render_board(leaderboard['seven_days'], 'Last 7 Days'))
-        SlackSdk.create_message(token, channel_id, text, [], in_channel=True)
-
+        # Post on slack both reports
         text = 'MOD TEAM SPEED REPORT AS OF {} UTC\n'.format(datetime.utcnow())
         text += '```\n'
         text += 'Average time to first mod review (all-time): %s over %i pieces of content\n' \
@@ -182,7 +202,6 @@ class SlackSdk(object):
                avg(counts['other'], counts['total_flagged']))
         text += '```\n'
 
-        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
         return SlackSdk.create_message(token, channel_id,
                                        text, [], in_channel=True, async=True)
 
