@@ -7,6 +7,7 @@ import re
 import requests
 import traceback
 from django.http import HttpResponse
+from background_task import background
 from accounts.models import AuthToken
 from moderations.models import Moderation, ModerationAction
 from moderations.utils import timedelta_to_str
@@ -275,6 +276,7 @@ def is_answer(text):
                 'answer' in text and 'in response to' in text
 
 
+@background(schedule=20)
 def mod_inbox_approved(data, moderation):
 
     original_message = data.get('original_message')
@@ -693,6 +695,7 @@ def mod_inbox_reject_undo(data):
     return HttpResponse('')
 
 
+@background(schedule=20)
 def mod_inbox_reject_reason(data, moderation):
     original_message = data.get('original_message')
     text = original_message.get('text')
@@ -745,7 +748,7 @@ def mod_inbox_reject_reason(data, moderation):
 def mod_inbox(data, action, moderation):
 
     if action == 'approve':
-        return mod_inbox_approved(data, moderation)
+        return mod_inbox_approved(data, moderation, schedule=0)
 
     elif action == 'reject':
         return mod_inbox_reject(data, moderation)
@@ -755,7 +758,7 @@ def mod_inbox(data, action, moderation):
 
     elif (action == 'off_topic') or (action == 'inappropriate') \
             or (action == 'contact_info') or (action == 'other'):
-        return mod_inbox_reject_reason(data, moderation)
+        return mod_inbox_reject_reason(data, moderation, schedule=0)
 
 
 def mod_approved_advice(data, action, moderation):
