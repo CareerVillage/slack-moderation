@@ -43,7 +43,6 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
             status='#modinbox',
             status_reason='moderate'
         )
-        post_moderation_async(moderation_id=moderation.id, data=data)
 
         serializer.moderation = moderation
 
@@ -51,25 +50,27 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
                                         action='moderate')
 
         data_for_mod_bot = {
-                'original_message': {
-                    'text': data['content']
-                },
-                'user': {
-                    'name': 'ModBot'
-                },
-                'action_ts': str(time.time()),
-                'actions': [
-                    {
-                        'value': 'Other'
-                    }
-                ],
-                'message_ts': Moderation.objects.get(id=moderation.id).message_id,
-            }
+            'original_message': {
+                'text': data['content']
+            },
+            'user': {
+                'name': 'ModBot'
+            },
+            'action_ts': str(time.time()),
+            'actions': [
+                {
+                    'value': 'Other'
+                }
+            ],
+            'message_ts': Moderation.objects.get(id=moderation.id).message_id,
+        }
 
         if data['auto_approve']:
             mod_inbox_approved(data_for_mod_bot, moderation)
         elif data['auto_flag']:
             mod_inbox_reject_reason(data_for_mod_bot, moderation)
+        else:
+            post_moderation_async(moderation_id=moderation.id, data=data)
 
 
 @api_view(['POST'])
