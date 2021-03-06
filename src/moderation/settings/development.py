@@ -16,6 +16,6 @@ DATABASES = {
     }
 }
 
-SOCIAL_AUTH_SLACK_KEY = '105721919958.1737964162128'
-SOCIAL_AUTH_SLACK_SECRET = '40d59eca259cc11ba4ddd40f10033f79'
+SOCIAL_AUTH_SLACK_KEY = '' # Do not commit secrets into version control (plus: this is public repo!)
+SOCIAL_AUTH_SLACK_SECRET = '' # Do not commit secrets into version control (plus: this is public repo!)
 SOCIAL_AUTH_SLACK_SCOPE = ['incoming-webhook', 'chat:write:user', 'chat:write:bot']
