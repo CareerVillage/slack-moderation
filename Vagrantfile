@@ -57,6 +57,7 @@ Vagrant.configure("2") do |config|
         master_config.vm.synced_folder ".", "/home/vagrant/moderation/source"
 
         master_config.vm.network "forwarded_port", guest: 80, host: 8000 #app
+        master_config.vm.network "forwarded_port", guest: 8000, host: 8001
         #master_config.vm.network "public_network"
         master_config.vm.provision :puppet do |puppet|
             puppet.manifests_path = "setup"

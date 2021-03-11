@@ -8,7 +8,7 @@ def async_get_request(url, params):
     return requests.get(url, params)
 
 
-@background(schedule=10)
+@background(schedule=2)
 def post_moderation_async(moderation_id, data):
     from .slack import SlackSdk
     slack = SlackSdk()
