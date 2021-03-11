@@ -23,3 +23,8 @@ docs/_static
 docs/_templates
 deploys.log
 src/moderation/settings/settings_local_dev.py
+F872B53B537225C196F4FB5D98775462.txt
+assets/
+newrelic.ini
+static/.well-known/
+static/76B86FC795C4F356CC996270B28EDE78.txt
