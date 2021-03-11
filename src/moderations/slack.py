@@ -100,7 +100,7 @@ class SlackSdk(object):
         token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
 
         def post_leaderboard_on_slack(leaderboard, title, text=''):
-            if title == 'all_time':
+            if title == 'All Time':
                 text += (
                     '```\n'
                     'ALL TIME LEADERBOARD\n')
