@@ -173,6 +173,7 @@ class SlackSdk(object):
         text += 'Average time to first mod resolution (last 7 days): %s over %i pieces of content\n' \
             % (timedelta_to_str(leaderboard['avg']['seven_days']['resolution'][0]),
                leaderboard['avg']['seven_days']['resolution'][1])
+        text += 'The oldest unmoderated piece of content is from: %s\n' % (leaderboard['last_unmoderated_content_date'])
         text += '```\n'
 
         text += 'CONTENT QUALITY REPORT AS OF {} UTC\n'.format(datetime.utcnow())
