@@ -3,7 +3,7 @@
 from datetime import timedelta
 from django.db.models import Avg, Count, F
 from django.utils import timezone
-from moderations.models import ModerationAction
+from moderations.models import ModerationAction, Moderation
 
 
 def get_leaderboard():
@@ -78,6 +78,8 @@ def get_leaderboard():
             counts['total_flagged'] += total
             counts[action] = total 
 
+    last_unmoderated_content_date = Moderation.objects.filter(status_reason='moderate').order_by('created_at')[0].created_at.strftime('%m-%d-%Y')
+
     return {
         'all_time': all_time,
         'seven_days': seven_days,
@@ -92,4 +94,5 @@ def get_leaderboard():
             },
         },
         'counts': counts,
+        'last_unmoderated_content_date': last_unmoderated_content_date,
     }
