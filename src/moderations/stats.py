@@ -1,6 +1,7 @@
 
 
 from datetime import timedelta
+from src.moderations.slack import SlackSdk
 from django.db.models import Avg, Count, F
 from django.utils import timezone
 from moderations.models import ModerationAction, Moderation
@@ -77,8 +78,10 @@ def get_leaderboard():
         elif action in flag_actions:
             counts['total_flagged'] += total
             counts[action] = total 
-
-    last_unmoderated_content_date = Moderation.objects.filter(status_reason='moderate').order_by('created_at')[0].created_at.strftime('%m-%d-%Y')
+    
+    all_messages = SlackSdk.get_all_messages_of_channel('#mod-inbox')
+    list_of_ts = list_of_ts = [message['ts'] for message in all_messages]
+    last_unmoderated_content_date = Moderation.objects.filter(message_id__in=list_of_ts).order_by('created_at')[0].created_at.strftime('%Y-%m-%d')
 
     return {
         'all_time': all_time,
