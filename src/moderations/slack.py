@@ -49,6 +49,19 @@ class SlackSdk(object):
             return None, None
 
     @staticmethod
+    def get_all_messages_of_channel(channel):
+        token, channel_id = SlackSdk.get_channel_data(channel)
+
+        url='https://slack.com/api/conversations.history'
+        params = {
+                'token': token,
+                'channel': channel_id,
+            }
+
+        response = async_get_request(url, params)
+        return response.json()['messages']
+
+    @staticmethod
     def post_moderation(text):
 
         attachments = [
