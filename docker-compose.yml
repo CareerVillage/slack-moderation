@@ -1,0 +1,37 @@
+version: "3"
+
+services:
+    postgres:
+        image: postgres:11-alpine
+        ports:
+            - "5433:5433"
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_DB=moderation
+            - POSTGRES_USER=moderation
+            - POSTGRES_PASSWORD=moderation
+        command: -p 5433
+
+    slack-moderation:
+        build: .
+        volumes:
+            - .:/moderation
+            - ./src/assets:/moderation/src/assets
+        depends_on:
+            - postgres
+        expose:
+            - 8000
+        command: './run_django.sh'
+
+    nginx:
+        build: ./nginx
+        ports:
+            - 8000:80
+        volumes:
+            - ./src/assets:/moderation/src/assets
+        depends_on:
+            - slack-moderation
+volumes:
+    postgres-data:
+
