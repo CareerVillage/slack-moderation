@@ -173,11 +173,19 @@ class SlackSdk(object):
         text += '```\n'
         text += 'Average time to first mod review (all-time): %s over %i pieces of content\n' \
             % (timedelta_to_str(leaderboard['avg']['all_time']['review'][0]),
-               leaderboard['avg']['all_time']['review'][1])
+               leaderboard['avg']['all_time']['review'][2])
+
+        text += '90th Percentile time to first mod review (all-time): %s over %i pieces of content\n' \
+            % (timedelta_to_str(leaderboard['avg']['all_time']['review'][1]),
+               leaderboard['avg']['all_time']['review'][2])
 
         text += 'Average time to first mod review (last 7 days): %s over %i pieces of content\n' \
             % (timedelta_to_str(leaderboard['avg']['seven_days']['review'][0]),
-               leaderboard['avg']['seven_days']['review'][1])
+               leaderboard['avg']['seven_days']['review'][2])
+
+        text += '90th Percentile time to first mod review (last 7 days): %s over %i pieces of content\n' \
+            % (timedelta_to_str(leaderboard['avg']['seven_days']['review'][1]),
+               leaderboard['avg']['seven_days']['review'][2])
 
         text += 'Average time to first mod resolution (all-time): %s over %i pieces of content\n' \
             % (timedelta_to_str(leaderboard['avg']['all_time']['resolution'][0]),
