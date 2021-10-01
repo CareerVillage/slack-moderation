@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from __future__ import absolute_import
 from django.db import models
 
 
@@ -32,7 +33,7 @@ class ModerationAction(models.Model):
     """
     Keep history of back and forth between service and Slack.
     """
-    moderation = models.ForeignKey(Moderation)
+    moderation = models.ForeignKey(Moderation, on_delete=models.CASCADE)
     action = models.CharField(max_length=50)
     action_author_id = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

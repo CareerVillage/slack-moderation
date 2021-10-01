@@ -1,4 +1,4 @@
-FROM python:2.7.18-buster
+FROM python:3.6-buster
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -10,6 +10,8 @@ RUN apt-get clean && \
 
 RUN mkdir -p /moderation/src
 WORKDIR /moderation
+
+RUN pip install --upgrade pip
 
 COPY requirements/base.pip ./
 

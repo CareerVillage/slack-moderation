@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import timedelta
 from django.db.models import Avg, Count, F
 from django.utils import timezone

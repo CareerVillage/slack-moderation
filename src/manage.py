@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 
@@ -12,7 +14,7 @@ if __name__ == '__main__':
         # exceptions on Python 2.
         try:
             import django
-            print django.VERSION
+            print(django.VERSION)
         except ImportError:
             raise ImportError(
                 "Couldn't import Django. Are you sure it's installed and "

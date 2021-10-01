@@ -1,4 +1,6 @@
-from django.core.urlresolvers import reverse
+from __future__ import absolute_import
+from __future__ import print_function
+from django.urls import reverse
 from django.shortcuts import redirect
 from django.views.generic import ListView
 from .models import AuthToken
@@ -22,7 +24,7 @@ def social_complete(*args, **kwargs):
     access_token = data['access_token']
     entry = AuthToken.objects.filter(service_name=service_name,
                                      service_entity_auth_name=channel).first()
-    print entry
+    print(entry)
     if not entry:
         AuthToken.objects.create(service_name=service_name,
                                  service_entity_auth_name=channel,
