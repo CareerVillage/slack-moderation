@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'social.apps.django_app.default',
+    'social_django',
     'accounts',
     'moderations',
     'background_task',
@@ -74,6 +74,8 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -139,21 +141,25 @@ STATICFILES_FINDERS = (
 
 
 AUTHENTICATION_BACKENDS = (
-    'social.backends.slack.SlackOAuth2',
+    'social_core.backends.slack.SlackOAuth2',
 )
 
 
 SOCIAL_AUTH_SLACK_KEY = ''
 SOCIAL_AUTH_SLACK_SECRET = ''
 SOCIAL_AUTH_SLACK_SCOPE = []
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+SLACK_SOCIAL_AUTH_RAISE_EXCEPTIONS = True
+SOCIAL_AUTH_RAISE_EXCEPTIONS = True
+RAISE_EXCEPTIONS = True
 
 
 SOCIAL_AUTH_PIPELINE = (
-    'social.pipeline.social_auth.social_details',
-    'social.pipeline.social_auth.social_uid',
-    'social.pipeline.social_auth.auth_allowed',
-    'social.pipeline.social_auth.social_user',
-    'social.pipeline.user.get_username',
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
     'accounts.views.social_complete',
 )
 
