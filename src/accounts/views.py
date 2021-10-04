@@ -30,5 +30,5 @@ def social_complete(*args, **kwargs):
                                  service_entity_auth_name=channel,
                                  service_entity_auth_id=channel_id,
                                  service_auth_token=access_token,
-                                 username=data['user'])
+                                 username=data['user']['name'])
     return redirect(reverse('accounts:auth'))

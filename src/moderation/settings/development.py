@@ -19,4 +19,4 @@ DATABASES = {
 SOCIAL_AUTH_SLACK_KEY = '' # Do not commit secrets into version control (plus: this is public repo!)
 SOCIAL_AUTH_SLACK_SECRET = '' # Do not commit secrets into version control (plus: this is public repo!)
 SOCIAL_AUTH_SLACK_SCOPE = ['incoming-webhook', 'chat:write:user', 'chat:write:bot', 
-                           'channels:history', 'groups:history', 'mpim:history', 'im:history'] # 'identity.basic', 'identity.email'
+                           'channels:history', 'groups:history', 'mpim:history', 'im:history']

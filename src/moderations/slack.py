@@ -56,11 +56,10 @@ class SlackSdk(object):
 
         url='https://slack.com/api/conversations.history'
         params = {
-                'token': token,
                 'channel': channel_id,
             }
 
-        response = async_get_request(url, params)
+        response = async_get_request(url, params, token)
         return response.json()['messages']
 
     @staticmethod
@@ -245,7 +244,6 @@ class SlackSdk(object):
                            % (new_content_text, new_content_type, link)
 
             params = {
-                'token': access_token,
                 'channel': channel_id,
                 'text': text,
                 'attachments': json.dumps(attachments),
@@ -256,9 +254,11 @@ class SlackSdk(object):
                 params['response_type'] = 'in_channel'
 
             if not is_async:
-                return requests.get(url='https://slack.com/api/chat.postMessage', params=params)
+                return requests.get(url='https://slack.com/api/chat.postMessage', 
+                                    params=params, 
+                                    headers={'Authorization': f'Bearer {access_token}'})
             else:
-                return async_get_request(url='https://slack.com/api/chat.postMessage', params=params)
+                return async_get_request('https://slack.com/api/chat.postMessage', params, access_token)
         except:
             print(traceback.format_exe())
 
@@ -266,10 +266,10 @@ class SlackSdk(object):
     def delete_message(access_token, channel_id, ts):
         return async_get_request(url='https://slack.com/api/chat.delete',
                                  params={
-                                     'token': access_token,
                                      'ts': ts,
                                      'channel': channel_id,
-                                 })
+                                 },
+                                 access_token=access_token)
 
     @staticmethod
     def update_message(access_token, channel_id, ts,
@@ -277,13 +277,13 @@ class SlackSdk(object):
 
         return async_get_request(url='https://slack.com/api/chat.update',
                                  params={
-                                     'token': access_token,
                                      'ts': ts,
                                      'channel': channel_id,
                                      'text': text,
                                      'attachments': json.dumps(attachments),
                                      'parse': 'none',
-                                 })
+                                 },
+                                 access_token=access_token)
 
 
 def is_answer(text):
