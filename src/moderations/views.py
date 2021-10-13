@@ -44,33 +44,31 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
             status_reason='moderate'
         )
 
-        serializer.moderation = moderation
+        post_moderation_async(moderation_id=moderation.id, data=data)
 
-        ModerationAction.objects.create(moderation=moderation,
-                                        action='moderate')
+        ModerationAction.objects.create(moderation=moderation, action='moderate')
 
-        data_for_mod_bot = {
-            'original_message': {
-                'text': data['content']
-            },
-            'user': {
-                'name': 'ModBot'
-            },
-            'action_ts': str(time.time()),
-            'actions': [
-                {
-                    'value': 'Other'
-                }
-            ],
-            'message_ts': Moderation.objects.get(id=moderation.id).message_id,
-        }
+        if data['auto_approve'] is True or data['auto_flag'] is True:
+            data_for_mod_bot = {
+                'original_message': {
+                    'text': data['content']
+                },
+                'user': {
+                    'name': 'ModBot'
+                },
+                'action_ts': str(time.time()),
+                'actions': [
+                    {
+                        'value': 'Other'
+                    }
+                ],
+                'message_ts': Moderation.objects.get(id=moderation.id).message_id,
+            }
 
-        if data['auto_approve']:
-            mod_inbox_approved(data_for_mod_bot, moderation)
-        elif data['auto_flag']:
-            mod_inbox_reject_reason(data_for_mod_bot, moderation)
-        else:
-            post_moderation_async(moderation_id=moderation.id, data=data)
+            if data['auto_approve'] == True:
+                mod_inbox_approved(data_for_mod_bot, moderation)
+            elif data['auto_flag'] == True:
+                mod_inbox_reject_reason(data_for_mod_bot, moderation)          
 
 
 @api_view(['POST'])
