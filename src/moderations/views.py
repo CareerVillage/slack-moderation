@@ -48,7 +48,10 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
         ModerationAction.objects.create(moderation=moderation, action='moderate')
 
-        if data['auto_approve'] is True or data['auto_flag'] is True:
+        # if '|question' not in data['content'] is a provisional fix to force to don't auto approve any questions,
+        # while we figuere out why among many questions, one gets randomly approved by ModBot
+        if '|question' not in data['content'] and \
+        data['auto_approve'] is True or data['auto_flag'] is True:
             data_for_mod_bot = {
                 'original_message': {
                     'text': data['content']
