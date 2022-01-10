@@ -1,17 +1,14 @@
-from __future__ import absolute_import
-from __future__ import print_function
+import os
+import environ
+
 try:
     print('Importing ....')
-    from .base import *  # noqa
-    from .local import *  # noqa
-
+    from .base import *
+    if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
+        from .production import *
+    else:
+        from .local import *
 except ImportError:
     import traceback
     print(traceback.format_exc())
-    print('Unable to find moderation/settings/local.py')
-
-try:
-    from post_env_commons import *  # noqa
-
-except ImportError:
-    pass
+    print('Unable load all configuration files')

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from django.conf.urls import url, include
 from rest_framework import routers
 from .views import ModerationActionModelViewSet, slack_response, generate_stats

@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+    postgres:
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+    slack-moderation:
+        expose:
+            - 80
+        env_file:
+            - ./.env
+        environment:
+          - ENVIRONMENT=Production
+          - POSTGRES_HOST==${POSTGRES_HOST}
+          - POSTGRES_USER=${POSTGRES_USER}
+          - POSTGRES_DB=${POSTGRES_DB}
+
+    nginx:
+        ports:
+            - 80:80
+        environment:
+          - PRODUCTION=True
+          - CONFIG_FILE='production-config-file/nginx.conf'

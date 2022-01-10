@@ -3,7 +3,9 @@
 set -o errexit
 set -o nounset
 
-until pg_isready -h postgres -U moderation -d moderation -p 5433 ; do
+eval $(envkey-source)
+
+until pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DB} -p 5433 ; do
   >&2 echo "Postgres is unavailable - sleeping"
   sleep 5
 done

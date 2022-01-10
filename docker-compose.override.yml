@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+    postgres:
+        environment:
+            - POSTGRES_DB=moderation
+            - POSTGRES_USER=moderation
+            - POSTGRES_PASSWORD=moderation
+
+    slack-moderation:
+        expose:
+            - 8000
+        environment:
+          - ENVIRONMENT=Development
+          - POSTGRES_HOST=postgres
+          - POSTGRES_USER=moderation
+          - POSTGRES_DB=moderation
+
+    nginx:
+        ports:
+            - 8000:80
+        environment:
+          - PRODUCTION=False
+          - CONFIG_FILE='nginx.conf'

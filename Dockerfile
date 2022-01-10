@@ -11,6 +11,9 @@ RUN apt-get clean && \
 RUN mkdir -p /moderation/src
 WORKDIR /moderation
 
+COPY .env .
+COPY .envkey .
+
 RUN pip install --upgrade pip
 
 COPY requirements/base.pip ./

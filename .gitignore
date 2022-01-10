@@ -28,3 +28,6 @@ assets/
 newrelic.ini
 static/.well-known/
 static/76B86FC795C4F356CC996270B28EDE78.txt
+.env
+.envkey
+.vscode/

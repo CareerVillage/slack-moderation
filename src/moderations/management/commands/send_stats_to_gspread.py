@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client import crypt
