@@ -1,4 +1,5 @@
 import os
+import environ
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -160,3 +161,37 @@ LOGGING = {
         },
     },
 }
+
+if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
+    import envkey
+
+    env = environ.Env()
+
+    DEBUG = False
+    TEMPLATE_DEBUG = DEBUG
+
+    ENABLE_SENTRY = True
+
+    SECRET_KEY = env.str('SECRET_KEY')
+
+
+    ALLOWED_HOSTS = ['slack-moderation.com']
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': env.str('POSTGRES_DB'),
+            'USER': env.str('POSTGRES_USER'),
+            'PASSWORD': env.str('POSTGRES_PASSWORD'),
+            'HOST': env.str('POSTGRES_HOST'),
+            'PORT': '5432',
+        }
+    }
+
+    SOCIAL_AUTH_SLACK_KEY = env.str('SOCIAL_AUTH_SLACK_KEY')
+    SOCIAL_AUTH_SLACK_SECRET = env.str('SOCIAL_AUTH_SLACK_SECRET')
+    SOCIAL_AUTH_SLACK_SCOPE = ['incoming-webhook', 'chat:write:user', 'chat:write:bot',
+                               'channels:history', 'groups:history', 'mpim:history', 'im:history']
+else:
+    from .local import *

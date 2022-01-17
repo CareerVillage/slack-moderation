@@ -31,3 +31,6 @@ static/76B86FC795C4F356CC996270B28EDE78.txt
 .env
 .envkey
 .vscode/
+moderation_ssl_crt
+moderation_ssl_key
+.htpasswd

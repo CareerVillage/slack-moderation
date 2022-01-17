@@ -2,6 +2,12 @@ version: "3"
 
 services:
     postgres:
+        image: postgres:13-alpine
+        ports:
+            - "5433:5433"
+        volumes:
+            - pg-data:/var/lib/postgresql/data
+        command: -p 5433
         environment:
             - POSTGRES_DB=moderation
             - POSTGRES_USER=moderation
@@ -10,6 +16,8 @@ services:
     slack-moderation:
         expose:
             - 8000
+        depends_on:
+            - postgres
         environment:
           - ENVIRONMENT=Development
           - POSTGRES_HOST=postgres
@@ -19,6 +27,3 @@ services:
     nginx:
         ports:
             - 8000:80
-        environment:
-          - PRODUCTION=False
-          - CONFIG_FILE='nginx.conf'

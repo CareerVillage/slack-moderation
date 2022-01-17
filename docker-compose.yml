@@ -1,21 +1,11 @@
 version: "3"
 
 services:
-    postgres:
-        image: postgres:11-alpine
-        ports:
-            - "5433:5433"
-        volumes:
-            - pg-data:/var/lib/postgresql/data
-        command: -p 5433
-
     slack-moderation:
         build: .
         volumes:
             - .:/moderation
             - ./src/assets:/moderation/src/assets
-        depends_on:
-            - postgres
         command: './run_django.sh'
 
     nginx:
