@@ -18,7 +18,7 @@ services:
             - 443:443
         volumes: 
           - nginx-certs:/etc/nginx/certs
-          - api:/moderation/src/run
+          - run:/moderation/src/run
         env_file:
           - ./.env
 volumes:
