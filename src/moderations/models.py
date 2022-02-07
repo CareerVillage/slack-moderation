@@ -24,6 +24,18 @@ class Moderation(models.Model):
     message_id = models.TextField(blank=True, null=True)
 
     objects = ModerationManager()
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['content_key']),
+            models.Index(fields=['content']),
+            models.Index(fields=['content_author_id']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['status']),
+            models.Index(fields=['status_reason']),
+            models.Index(fields=['status_date']),
+            models.Index(fields=['message_id']),
+        ]
 
 
 class ModerationAction(models.Model):
@@ -34,3 +46,11 @@ class ModerationAction(models.Model):
     action = models.CharField(max_length=50)
     action_author_id = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['moderation']),
+            models.Index(fields=['action']),
+            models.Index(fields=['action_author_id']),
+            models.Index(fields=['created_at']),
+        ]
