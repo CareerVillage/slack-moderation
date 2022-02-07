@@ -11,12 +11,3 @@ class AuthToken(models.Model):
     service_entity_auth_id = models.TextField()
     service_auth_token = models.TextField()
     username = models.CharField(max_length=50)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['service_name']),
-            models.Index(fields=['service_entity_auth_name']),
-            models.Index(fields=['service_entity_auth_id']),
-            models.Index(fields=['service_auth_token']),
-            models.Index(fields=['username']),
-        ]
