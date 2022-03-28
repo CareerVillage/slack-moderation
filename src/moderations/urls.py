@@ -7,6 +7,7 @@ router.register(r'moderations', ModerationActionModelViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
+app_name = 'moderations'
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^slack/response/$', slack_response, name='slack_response'),

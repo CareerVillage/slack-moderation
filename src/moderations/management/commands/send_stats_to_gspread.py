@@ -16,17 +16,17 @@ class Command(BaseCommand):
             """
             Convert seconds to hour fraction. i. e. 1 hour and 60 seconds are 1,016~ hours.
             """
-            print '--------'
-            print timedelta_object.days, timedelta_object.seconds
+            print('--------')
+            print(timedelta_object.days, timedelta_object.seconds)
             hours = timedelta_object.days * 24
             seconds = timedelta_object.seconds
             fraction_of_hour = seconds / 3600.0
 
-            print hours, fraction_of_hour
+            print(hours, fraction_of_hour)
             return hours + fraction_of_hour
 
         leaderboard = get_leaderboard()
-        print leaderboard
+        print(leaderboard)
 
         avg_time_first_mod_rev_all = get_hour_fraction(leaderboard['avg']['all_time']['review'][0])
         avg_time_first_mod_rev_week = get_hour_fraction(leaderboard['avg']['seven_days']['review'][0])

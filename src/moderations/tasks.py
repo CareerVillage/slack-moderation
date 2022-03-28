@@ -2,8 +2,8 @@ import requests
 from .models import Moderation
 
 
-def async_get_request(url, params):
-    return requests.get(url, params)
+def async_get_request(url, params, access_token):
+    return requests.get(url, params=params, headers={'Authorization': f'Bearer {access_token}'})
 
 
 def post_moderation_async(moderation_id, data):

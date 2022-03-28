@@ -1,6 +1,7 @@
 
-
 def timedelta_to_str(td):
+    print('******************')
+    print(td)
     result = ''
     td = str(td).split(',') # Timedeltas >24hrs have commas
     if len(td) > 1: # Timedelta > 1 day

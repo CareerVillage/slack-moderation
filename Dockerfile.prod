@@ -1,0 +1,37 @@
+FROM python:3.6-buster
+
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+RUN apt-get clean && \
+    apt-get update -y && \
+    apt-get install -y nginx \
+    postgresql-client
+
+RUN mkdir -p /moderation/src
+
+WORKDIR /moderation
+
+COPY .env .
+COPY .envkey .
+
+# install envkey-source
+RUN curl -s https://raw.githubusercontent.com/envkey/envkey-source/master/install.sh | bash
+RUN eval $(envkey-source)
+
+RUN echo "POSTGRES_DB = $POSTGRES_DB" >> .env
+RUN echo "POSTGRES_USER = $POSTGRES_USER" >> .env
+RUN echo "POSTGRES_PASSWORD = $POSTGRES_PASSWORD" >> .env
+RUN echo "POSTGRES_HOST = $POSTGRES_HOST" >> .env
+
+RUN pip install --upgrade pip
+
+COPY requirements/base.pip ./
+
+RUN pip install --no-cache-dir -r base.pip
+
+COPY ./src /moderation/src
+
+WORKDIR /moderation/src
+
+ENTRYPOINT ["/moderation/src/docker-entrypoint.sh"]

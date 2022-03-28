@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from datetime import datetime
 import json
 import pprint
@@ -54,11 +52,10 @@ class SlackSdk(object):
 
         url='https://slack.com/api/conversations.history'
         params = {
-                'token': token,
                 'channel': channel_id,
             }
 
-        response = async_get_request(url, params)
+        response = async_get_request(url, params, token)
         return response.json()['messages']
 
     @staticmethod
@@ -127,7 +124,7 @@ class SlackSdk(object):
                 '│ {0: <20} | {1: <20} │\n'
             ).format('Mod', title)
 
-            sorted_leaderboard = sorted(leaderboard.items(),
+            sorted_leaderboard = sorted(list(leaderboard.items()),
                                         key=lambda x: x[1],
                                         reverse=True)
 
@@ -142,14 +139,14 @@ class SlackSdk(object):
                     if count >= 20:
                         text += '```\n'
                         SlackSdk.create_message(token, channel_id,
-                                                text, [], in_channel=True, async=True)
+                                                text, [], in_channel=True, is_async=True)
                         count = 0
                         text = '```\n'
 
             text += '└----------------------┴----------------------┘\n'
             text += '```\n'
             return SlackSdk.create_message(token, channel_id,
-                                           text, [], in_channel=True, async=True)
+                                           text, [], in_channel=True, is_async=True)
 
         
 
@@ -225,11 +222,11 @@ class SlackSdk(object):
         text += '```\n'
 
         return SlackSdk.create_message(token, channel_id,
-                                       text, [], in_channel=True, async=True)
+                                       text, [], in_channel=True, is_async=True)
 
     @staticmethod
     def create_message(access_token, channel_id,
-                       text='', attachments=[], in_channel=False, async=False):
+                       text='', attachments=[], in_channel=False, is_async=False):
 
         try:
 
@@ -251,7 +248,6 @@ class SlackSdk(object):
                            % (new_content_text, new_content_type, link)
 
             params = {
-                'token': access_token,
                 'channel': channel_id,
                 'text': text,
                 'attachments': json.dumps(attachments),
@@ -261,21 +257,23 @@ class SlackSdk(object):
             if in_channel:
                 params['response_type'] = 'in_channel'
 
-            if not async:
-                return requests.get(url='https://slack.com/api/chat.postMessage', params=params)
+            if not is_async:
+                return requests.get(url='https://slack.com/api/chat.postMessage', 
+                                    params=params, 
+                                    headers={'Authorization': f'Bearer {access_token}'})
             else:
-                return async_get_request(url='https://slack.com/api/chat.postMessage', params=params)
+                return async_get_request('https://slack.com/api/chat.postMessage', params, access_token)
         except:
-            print traceback.format_exe()
+            print(traceback.format_exe())
 
     @staticmethod
     def delete_message(access_token, channel_id, ts):
         return async_get_request(url='https://slack.com/api/chat.delete',
                                  params={
-                                     'token': access_token,
                                      'ts': ts,
                                      'channel': channel_id,
-                                 })
+                                 },
+                                 access_token=access_token)
 
     @staticmethod
     def update_message(access_token, channel_id, ts,
@@ -283,13 +281,13 @@ class SlackSdk(object):
 
         return async_get_request(url='https://slack.com/api/chat.update',
                                  params={
-                                     'token': access_token,
                                      'ts': ts,
                                      'channel': channel_id,
                                      'text': text,
                                      'attachments': json.dumps(attachments),
                                      'parse': 'none',
-                                 })
+                                 },
+                                 access_token=access_token)
 
 
 def is_answer(text):
@@ -321,20 +319,20 @@ def mod_inbox_approved(data, moderation):
     ]
 
     token, channel_id = SlackSdk.get_channel_data('#mod-approved')
-    print 'Channel: ', channel_id
+    print('Channel: ', channel_id)
     response = SlackSdk.create_message(token, channel_id, text, attachments)
-    print 'Reponse: ', response.status_code
+    print('Reponse: ', response.status_code)
     if response.status_code == 200:
         data = response.json()
-        print 'Data: ', data
+        print('Data: ', data)
         if data.get('ok'):
             token, channel_id = SlackSdk.get_channel_data('#mod-inbox')
-            print 'save moderation action'
+            print('save moderation action')
             save_moderation_action(moderation, approved_by, channel_id,
                                    'approve', data.get('ts'))
-            print 'Delete message -> '
+            print('Delete message -> ')
             response = SlackSdk.delete_message(token, channel_id, ts)
-            print 'Response ', response
+            print('Response ', response)
 
             if is_answer(text):
                 send_to_approved_advice(data, moderation)
@@ -385,7 +383,7 @@ def send_to_approved_advice(data, moderation):
         token, channel_id = SlackSdk.get_channel_data('#approved-advice')
         response = SlackSdk.create_message(token, channel_id, text, attachments)
     except:
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 
 def mod_pro_tip(data, moderation, current_question_index, response):
@@ -413,7 +411,7 @@ def mod_pro_tip(data, moderation, current_question_index, response):
                     if 'yes' in value:
                         yes_count += 1
 
-            print '--------------------'
+            print('--------------------')
             pp.pprint(attachment)
 
             if attachment.get('title') == SUMMARY_TITLE:
@@ -457,21 +455,20 @@ def mod_pro_tip(data, moderation, current_question_index, response):
             else:
                 attachments.append(attachment)
 
-        print '-------------------------------'
-        print 'Attachments: (before lambda)'
+        print('-------------------------------')
+        print('Attachments: (before lambda)')
         pp.pprint(attachments)
 
-        attachments = filter(lambda item: item.get('title') != SUMMARY_TITLE,
-                             attachments)
+        attachments = [item for item in attachments if item.get('title') != SUMMARY_TITLE]
 
-        print '-------------------------------'
-        print 'Attachments: (before summary)'
+        print('-------------------------------')
+        print('Attachments: (before summary)')
         pp.pprint(attachments)
 
-        print '******************** Yes Count:'
-        print yes_count
-        print '********* summary (old)'
-        print summary['text']
+        print('******************** Yes Count:')
+        print(yes_count)
+        print('********* summary (old)')
+        print(summary['text'])
 
         summary['text'] = "You have currently positively marked " + str(yes_count) + " out of 10 ProTips"
 
@@ -493,8 +490,8 @@ def mod_pro_tip(data, moderation, current_question_index, response):
 
         attachments.append(summary)
 
-        print '-------------------------------'
-        print 'Attachments: (after summary)'
+        print('-------------------------------')
+        print('Attachments: (after summary)')
         pp.pprint(attachments)
 
         token, channel_id = SlackSdk.get_channel_data('#approved-advice')
@@ -502,7 +499,7 @@ def mod_pro_tip(data, moderation, current_question_index, response):
                                 ts, text=text, attachments=attachments)
 
     except:
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 
 def mod_submit(data, moderation):
@@ -578,7 +575,7 @@ def mod_submit(data, moderation):
         return HttpResponse('')
 
     except:
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 
 def mod_approve(data, moderation):
@@ -617,7 +614,7 @@ def mod_approve(data, moderation):
         return HttpResponse('')
 
     except:
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 
 def mod_inbox_reject(data, moderation):
@@ -800,7 +797,7 @@ def mod_approved_advice(data, action, moderation):
             return mod_approve(data, moderation)
 
     except:
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 
 def mod_flagged_resolve(data, moderation):
@@ -868,7 +865,7 @@ def moderate(data):
     """
     data = data.get('payload')
     data = json.loads(data)
-    print data
+    print(data)
     if data:
 
         action = data.get('actions')[0].get('value')

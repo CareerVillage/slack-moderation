@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+    slack-moderation:
+        build: .
+        volumes:
+            - .:/moderation
+            - ./src/assets:/moderation/src/assets
+        command: './run_django.sh'
+
+    nginx:
+        build: ./nginx
+        volumes:
+            - ./src/assets:/moderation/src/assets
+        depends_on:
+            - slack-moderation
+volumes:
+    pg-data:
+
