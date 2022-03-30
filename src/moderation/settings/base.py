@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     'social_django',
     'accounts',
     'moderations',
-    'background_task',
 ]
 
 MIDDLEWARE = [
