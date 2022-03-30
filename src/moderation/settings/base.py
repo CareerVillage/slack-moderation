@@ -1,5 +1,8 @@
 import os
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -193,5 +196,14 @@ if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
     SOCIAL_AUTH_SLACK_SECRET = env.str('SOCIAL_AUTH_SLACK_SECRET')
     SOCIAL_AUTH_SLACK_SCOPE = ['incoming-webhook', 'chat:write:user', 'chat:write:bot',
                                'channels:history', 'groups:history', 'mpim:history', 'im:history']
+
+    SENTRY_DSN = env.str('SENTRY_DSN', '')
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True
+    )
+
 else:
     from .local import *
