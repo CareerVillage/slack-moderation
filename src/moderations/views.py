@@ -1,7 +1,9 @@
 import time
+
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 from .models import Moderation, ModerationAction
 from .serializers import ModerationSerializer
 from .slack import SlackSdk, moderate, mod_inbox_approved, mod_inbox_reject_reason
@@ -48,9 +50,9 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
         ModerationAction.objects.create(moderation=moderation, action='moderate')
 
-        # if '|question' not in data['content'] is a provisional fix to force to don't auto approve any questions,
+        # if '|question' not in data['content'] is a provisional fix to force to don't auto approve any posted questions,
         # while we figuere out why among many questions, one gets randomly approved by ModBot
-        if '|question' not in data['content'] and \
+        if not all(x in data['content'] for x in ['New content!','posted the', '|question']) and \
         data['auto_approve'] is True or data['auto_flag'] is True:
             data_for_mod_bot = {
                 'original_message': {
