@@ -135,9 +135,13 @@ def get_leaderboard():
             counts[action] = total
 
     slack = SlackSdk()
-    all_messages = slack.get_all_messages_of_channel('#mod-inbox')
-    list_of_ts = [message['ts'] for message in all_messages]
-    last_unmoderated_content_date = Moderation.objects.filter(message_id__in=list_of_ts).order_by('created_at')[0].created_at.strftime('%Y-%m-%d')
+
+    list_of_ts_in_mod_inbox = [message['ts'] for message in slack.get_all_messages_of_channel('#mod-inbox')]
+    messages_in_mod_inbox = Moderation.objects.filter(message_id__in=list_of_ts_in_mod_inbox).order_by('created_at')
+    if messages_in_mod_inbox:
+        last_unmoderated_content_date = messages_in_mod_inbox[0].created_at.strftime('%Y-%m-%d')
+    else:
+        last_unmoderated_content_date = 'Currently, there is no unmoderated content'
 
     return {
         'all_time': all_time,
