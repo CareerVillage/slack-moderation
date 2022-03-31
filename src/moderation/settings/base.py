@@ -177,8 +177,9 @@ if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
 
     SECRET_KEY = env.str('SECRET_KEY')
 
+    ec2_ip_address = env.str('EC2_IP')
+    ALLOWED_HOSTS = ['slack-moderation.com', ec2_ip_address]
 
-    ALLOWED_HOSTS = ['slack-moderation.com']
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
     DATABASES = {
