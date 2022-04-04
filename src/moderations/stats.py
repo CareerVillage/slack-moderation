@@ -124,7 +124,11 @@ def get_leaderboard():
 
     counts = {}
     counts['total_flagged'] = 0
-    totals = ModerationAction.objects.values('action').annotate(total=Count('action'))
+    totals = (ModerationAction.objects
+              .filter(created_at__gte=timezone.now() - timedelta(days=7))
+              .values('action')
+              .annotate(total=Count('action'))
+              )
     for total in totals:
         action = total['action']
         total = total['total']
