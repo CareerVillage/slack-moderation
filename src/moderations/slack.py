@@ -218,7 +218,7 @@ class SlackSdk(object):
             % (contact_info_total,
                avg(contact_info_total, counts['total_flagged']))
 
-        other_total = counts['other'] if 'contact_info' in counts else 0
+        other_total = counts['other'] if 'other' in counts else 0
         text += 'Reason: Other: %i (%.2f%% of flags)\n' \
             % (other_total,
                avg(other_total, counts['total_flagged']))
