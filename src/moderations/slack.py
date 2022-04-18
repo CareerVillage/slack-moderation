@@ -197,28 +197,31 @@ class SlackSdk(object):
         text += 'CONTENT QUALITY REPORT AS OF {} UTC\n'.format(datetime.utcnow())
         counts = leaderboard['counts']
         text += '```\n'
-        text += 'Past 7 days content: %i\n' \
-            % counts['total']
+        text += 'Past 7 days content: %i\n' % counts['total']
 
         text += 'Past 7 days flagged by mods: %i (%.2f%%)\n' \
             % (counts['total_flagged'],
                avg(counts['total_flagged'], counts['total']))
 
+        off_topic_total = counts['off_topic'] if 'off_topic' in counts else 0
         text += 'Reason: Off topic: %i (%.2f%% of flags)\n' \
-            % (counts['off_topic'],
-               avg(counts['off_topic'], counts['total_flagged']))
+            % (off_topic_total,
+               avg(off_topic_total, counts['total_flagged']))
 
+        inappropriate_total = counts['inappropriate'] if 'inappropriate' in counts else 0
         text += 'Reason: Inappropriate: %i (%.2f%% of flags)\n' \
-            % (counts['inappropriate'],
-               avg(counts['inappropriate'], counts['total_flagged']))
+            % (inappropriate_total,
+               avg(inappropriate_total, counts['total_flagged']))
 
+        contact_info_total = counts['contact_info'] if 'contact_info' in counts else 0
         text += 'Reason: Contact info: %i (%.2f%% of flags)\n' \
-            % (counts['contact_info'],
-               avg(counts['contact_info'], counts['total_flagged']))
+            % (contact_info_total,
+               avg(contact_info_total, counts['total_flagged']))
 
+        other_total = counts['other'] if 'contact_info' in counts else 0
         text += 'Reason: Other: %i (%.2f%% of flags)\n' \
-            % (counts['other'],
-               avg(counts['other'], counts['total_flagged']))
+            % (other_total,
+               avg(other_total, counts['total_flagged']))
         text += '```\n'
 
         return SlackSdk.create_message(token, channel_id,
