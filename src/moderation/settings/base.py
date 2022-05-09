@@ -1,5 +1,8 @@
 import os
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,7 +35,6 @@ INSTALLED_APPS = [
     'social_django',
     'accounts',
     'moderations',
-    'background_task',
 ]
 
 MIDDLEWARE = [
@@ -121,6 +123,7 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.slack.SlackOAuth2',
@@ -157,7 +160,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
 }
@@ -174,8 +177,10 @@ if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
 
     SECRET_KEY = env.str('SECRET_KEY')
 
+    ec2_ip_address = env.str('EC2_IP')
+    ec2_url_address = env.str('EC2_URL')
+    ALLOWED_HOSTS = ['slack-moderation.com', ec2_ip_address, ec2_url_address]
 
-    ALLOWED_HOSTS = ['slack-moderation.com']
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
     DATABASES = {
@@ -193,5 +198,14 @@ if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
     SOCIAL_AUTH_SLACK_SECRET = env.str('SOCIAL_AUTH_SLACK_SECRET')
     SOCIAL_AUTH_SLACK_SCOPE = ['incoming-webhook', 'chat:write:user', 'chat:write:bot',
                                'channels:history', 'groups:history', 'mpim:history', 'im:history']
+
+    SENTRY_DSN = env.str('SENTRY_DSN', '')
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True
+    )
+
 else:
     from .local import *
