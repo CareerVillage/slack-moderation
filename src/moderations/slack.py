@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from accounts.models import AuthToken
 from moderations.models import Moderation, ModerationAction
 from moderations.utils import timedelta_to_str
-from .tasks import async_get_request
+from .tasks import get_request_task
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -55,7 +55,7 @@ class SlackSdk(object):
                 'channel': channel_id,
             }
 
-        response = async_get_request(url, params, token)
+        response = get_request_task(url, params, token)
         return response.json()['messages']
 
     @staticmethod
@@ -265,13 +265,13 @@ class SlackSdk(object):
                                     params=params, 
                                     headers={'Authorization': f'Bearer {access_token}'})
             else:
-                return async_get_request('https://slack.com/api/chat.postMessage', params, access_token)
+                return get_request_task('https://slack.com/api/chat.postMessage', params, access_token)
         except:
             print(traceback.format_exe())
 
     @staticmethod
     def delete_message(access_token, channel_id, ts):
-        return async_get_request(url='https://slack.com/api/chat.delete',
+        return get_request_task(url='https://slack.com/api/chat.delete',
                                  params={
                                      'ts': ts,
                                      'channel': channel_id,
@@ -282,7 +282,7 @@ class SlackSdk(object):
     def update_message(access_token, channel_id, ts,
                        text='', attachments=[]):
 
-        return async_get_request(url='https://slack.com/api/chat.update',
+        return get_request_task(url='https://slack.com/api/chat.update',
                                  params={
                                      'ts': ts,
                                      'channel': channel_id,

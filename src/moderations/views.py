@@ -8,7 +8,7 @@ from .models import Moderation, ModerationAction
 from .serializers import ModerationSerializer
 from .slack import SlackSdk, moderate, mod_inbox_approved, mod_inbox_reject_reason
 from .stats import get_leaderboard
-from .tasks import post_moderation_async
+from .tasks import post_moderation_task
 
 
 class ModerationActionModelViewSet(viewsets.ModelViewSet):
@@ -37,44 +37,51 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
            Send message to Slack
         """
         data = serializer.validated_data
+        
+        # Temporary fix while we discover why we receive duplicated messages
+        duplicated = False
+        old_obj = Moderation.objects.filter(content_key=data['content_key'])
+        if old_obj and old_obj[0].content == data['content']:
+            duplicated = False
 
-        moderation = Moderation.objects.create(
-            content_key=data['content_key'],
-            content=data['content'],
-            content_author_id=data['content_author_id'],
-            status='#modinbox',
-            status_reason='moderate'
-        )
+        if not duplicated:
+            moderation = Moderation.objects.create(
+                content_key=data['content_key'],
+                content=data['content'],
+                content_author_id=data['content_author_id'],
+                status='#modinbox',
+                status_reason='moderate'
+            )
 
-        post_moderation_async(moderation_id=moderation.id, data=data)
+            post_moderation_task(moderation_id=moderation.id, data=data)
 
-        ModerationAction.objects.create(moderation=moderation, action='moderate')
+            ModerationAction.objects.create(moderation=moderation, action='moderate')
 
-        print('------')
-        print(data)
-        print('------')
+            print('------')
+            print(data)
+            print('------')
 
-        if data['auto_approve'] is True or data['auto_flag'] is True:
-            data_for_mod_bot = {
-                'original_message': {
-                    'text': data['content']
-                },
-                'user': {
-                    'name': 'ModBot'
-                },
-                'action_ts': str(time.time()),
-                'actions': [
-                    {
-                        'value': 'Other'
-                    }
-                ],
-                'message_ts': Moderation.objects.get(id=moderation.id).message_id,
-            }
+            if data['auto_approve'] is True or data['auto_flag'] is True:
+                data_for_mod_bot = {
+                    'original_message': {
+                        'text': data['content']
+                    },
+                    'user': {
+                        'name': 'ModBot'
+                    },
+                    'action_ts': str(time.time()),
+                    'actions': [
+                        {
+                            'value': 'Other'
+                        }
+                    ],
+                    'message_ts': Moderation.objects.get(id=moderation.id).message_id,
+                }
 
-            if data['auto_approve'] == True:
-                mod_inbox_approved(data_for_mod_bot, moderation)
-            elif data['auto_flag'] == True:
-                mod_inbox_reject_reason(data_for_mod_bot, moderation)          
+                if data['auto_approve'] == True:
+                    mod_inbox_approved(data_for_mod_bot, moderation)
+                elif data['auto_flag'] == True:
+                    mod_inbox_reject_reason(data_for_mod_bot, moderation)          
 
 
 @api_view(['POST'])

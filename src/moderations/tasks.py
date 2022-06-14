@@ -2,11 +2,11 @@ import requests
 from .models import Moderation
 
 
-def async_get_request(url, params, access_token):
+def get_request_task(url, params, access_token):
     return requests.get(url, params=params, headers={'Authorization': f'Bearer {access_token}'})
 
 
-def post_moderation_async(moderation_id, data):
+def post_moderation_task(moderation_id, data):
     from .slack import SlackSdk
     slack = SlackSdk()
     response_data = slack.post_moderation(
