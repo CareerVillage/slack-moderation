@@ -32,6 +32,8 @@ COPY requirements/base.pip ./
 
 RUN pip install --no-cache-dir -r base.pip
 
+RUN pip install ipython
+
 COPY ./src /moderation/src
 
 WORKDIR /moderation/src
