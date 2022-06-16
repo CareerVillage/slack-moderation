@@ -27,7 +27,6 @@ class Moderation(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['content_author_id']),
             models.Index(fields=['created_at']),
             models.Index(fields=['status']),
             models.Index(fields=['status_reason']),
@@ -47,6 +46,7 @@ class ModerationAction(models.Model):
 
     class Meta:
         indexes = [
+            models.Index(fields=['moderation']),
             models.Index(fields=['action']),
             models.Index(fields=['action_author_id']),
             models.Index(fields=['created_at']),
