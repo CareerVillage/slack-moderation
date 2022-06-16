@@ -40,8 +40,8 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         
         # Temporary fix while we discover why we receive duplicated messages
         duplicated = False
-        old_objs = Moderation.objects.filter(content_key=data['content_key'])
-        if old_objs and old_objs.last().content == data['content']:
+        old_objs = Moderation.objects.filter(content_key=data['content_key']).values_list('content', flat=True)
+        if old_objs and old_objs[0] == data['content']:
             duplicated = True
 
         if not duplicated:
