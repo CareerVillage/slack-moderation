@@ -27,7 +27,6 @@ class Moderation(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['content_key']),
             models.Index(fields=['content_author_id']),
             models.Index(fields=['created_at']),
             models.Index(fields=['status']),
