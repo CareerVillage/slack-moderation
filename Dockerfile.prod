@@ -6,7 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 RUN apt-get clean && \
     apt-get update -y && \
     apt-get install -y nginx \
-    postgresql-client
+    postgresql-client \
+    curl
 
 RUN mkdir -p /moderation/src
 
@@ -16,7 +17,8 @@ COPY .env .
 COPY .envkey .
 
 # install envkey-source
-RUN curl -s https://raw.githubusercontent.com/envkey/envkey-source/master/install.sh | bash
+RUN VERSION=$(curl https://envkey-releases.s3.amazonaws.com/latest/envkeysource-version.txt) \ 
+  && curl -s https://envkey-releases.s3.amazonaws.com/envkeysource/release_artifacts/$VERSION/install.sh | bash
 RUN eval $(envkey-source)
 
 RUN echo "POSTGRES_DB = $POSTGRES_DB" >> .env
@@ -29,6 +31,8 @@ RUN pip install --upgrade pip
 COPY requirements/base.pip ./
 
 RUN pip install --no-cache-dir -r base.pip
+
+RUN pip install ipython
 
 COPY ./src /moderation/src
 
