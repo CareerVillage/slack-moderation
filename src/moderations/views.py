@@ -1,3 +1,4 @@
+import logging
 import time
 
 from rest_framework import viewsets
@@ -43,6 +44,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         old_objs = Moderation.objects.filter(content_key=data['content_key']).values_list('content', flat=True)
         if old_objs and old_objs[0] == data['content']:
             duplicated = True
+            print(f"Duplicated message recieved but not sent: id:{data['content_key']} content:{data['content']} author_id:{data['content_author_id']}")
 
         if not duplicated:
             moderation = Moderation.objects.create(
