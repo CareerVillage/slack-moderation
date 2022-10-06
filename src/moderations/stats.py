@@ -38,17 +38,15 @@ def get_leaderboard():
 
     moderation_actions = [
         'approve',
-        'inappropriate',
-        'contact_info',
+        'urgent',
+        'coaching',
         'other',
-        'off_topic',
     ]
 
     flag_actions = [
-        'inappropriate',
-        'contact_info',
+        'urgent',
+        'coaching',
         'other',
-        'off_topic',
     ]
 
     actions = ModerationAction.objects.filter(action__in=moderation_actions).values(
@@ -91,7 +89,6 @@ def get_leaderboard():
         )
     all_time_review_time_p90 = timedelta(seconds=all_time_review_time_p90_in_seconds)
 
-    all_time_resolution_count = ModerationAction.objects.filter(action='resolve').count()
     all_time_resolution_time_avg = ModerationAction.objects.filter(action='resolve').annotate(
         time_to_approve=F('created_at') - F('moderation__created_at')).values(
         'action', 'time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']

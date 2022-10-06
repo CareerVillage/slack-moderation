@@ -83,7 +83,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
                 if data['auto_approve'] == True:
                     mod_inbox_approved(data_for_mod_bot, moderation)
                 elif data['auto_flag'] == True:
-                    mod_inbox_reject_reason(data_for_mod_bot, moderation)          
+                    mod_inbox_reject_reason(data_for_mod_bot, moderation, 'mod-flagged')          
 
 
 @api_view(['POST'])
