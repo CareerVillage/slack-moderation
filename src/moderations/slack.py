@@ -203,20 +203,16 @@ class SlackSdk(object):
             % (counts['total_flagged'],
                avg(counts['total_flagged'], counts['total']))
 
-        off_topic_total = counts['off_topic'] if 'off_topic' in counts else 0
-        text += 'Reason: Off topic: %i (%.2f%% of flags)\n' \
-            % (off_topic_total,
-               avg(off_topic_total, counts['total_flagged']))
+        urgent_total = counts['urgent'] if 'urgent' in counts else 0
+        text += 'Reason: Urgent: %i (%.2f%% of flags)\n' \
+            % (urgent_total,
+               avg(urgent_total, counts['total_flagged']))
 
-        inappropriate_total = counts['inappropriate'] if 'inappropriate' in counts else 0
-        text += 'Reason: Inappropriate: %i (%.2f%% of flags)\n' \
-            % (inappropriate_total,
-               avg(inappropriate_total, counts['total_flagged']))
+        coaching_total = counts['coaching'] if 'coaching' in counts else 0
+        text += 'Reason: Coaching: %i (%.2f%% of flags)\n' \
+            % (coaching_total,
+               avg(coaching_total, counts['total_flagged']))
 
-        contact_info_total = counts['contact_info'] if 'contact_info' in counts else 0
-        text += 'Reason: Contact info: %i (%.2f%% of flags)\n' \
-            % (contact_info_total,
-               avg(contact_info_total, counts['total_flagged']))
 
         other_total = counts['other'] if 'other' in counts else 0
         text += 'Reason: Other: %i (%.2f%% of flags)\n' \
@@ -665,24 +661,17 @@ def mod_inbox_reject(data, moderation):
             ],
             'actions': [
                 {
-                    'name': 'Off topic',
-                    'text': 'Off topic',
+                    'name': 'Urgent',
+                    'text': 'Urgent',
                     'type': 'button',
-                    'value': 'off_topic',
+                    'value': 'urgent',
                     'style': 'danger'
                 },
                 {
-                    'name': 'Inappropriate',
-                    'text': 'Inappropriate',
+                    'name': 'Coaching',
+                    'text': 'Coaching',
                     'type': 'button',
-                    'value': 'inappropriate',
-                    'style': 'danger'
-                },
-                {
-                    'name': 'Contact info',
-                    'text': 'Contact info',
-                    'type': 'button',
-                    'value': 'contact_info',
+                    'value': 'coaching',
                     'style': 'danger'
                 },
                 {
@@ -743,7 +732,7 @@ def mod_inbox_reject_undo(data):
     return HttpResponse('')
 
 
-def mod_inbox_reject_reason(data, moderation):
+def mod_inbox_reject_reason(data, moderation, channel_to_send):
     original_message = data.get('original_message')
     text = original_message.get('text')
     rejected_by = data.get('user').get('name')
@@ -751,14 +740,14 @@ def mod_inbox_reject_reason(data, moderation):
     rejected_time = datetime.utcfromtimestamp(rejected_time)
     rejected_time = rejected_time.strftime('%Y-%m-%d %I:%M%p')
     rejected_reason = data.get('actions')[0]['value']
+    emoji = ':fire:' if rejected_reason == 'urgent' else ''
     ts = data.get('message_ts')
 
     attachments = [
         {
             'fallback': 'Moderator actions',
-            'text': '_%s UTC: @%s rejected this with the reason: \'%s\'_' %
-                    (rejected_time, rejected_by, rejected_reason),
-            'callback_id': 'mod-flagged',
+            'text': f'_{rejected_time} UTC: @{rejected_by} rejected this with the reason: \'{rejected_reason}\' {emoji}_',
+            'callback_id': channel_to_send,
             'attachment_type': 'default',
             'mrkdwn_in': ['text'],
             'actions': [
@@ -773,7 +762,7 @@ def mod_inbox_reject_reason(data, moderation):
         }
     ]
 
-    token, channel_id = SlackSdk.get_channel_data('#mod-flagged')
+    token, channel_id = SlackSdk.get_channel_data(f'#{channel_to_send}')
 
     response = SlackSdk.create_message(token, channel_id,
                                        text=text, attachments=attachments)
@@ -803,9 +792,11 @@ def mod_inbox(data, action, moderation):
     elif action == 'undo':
         return mod_inbox_reject_undo(data)
 
-    elif (action == 'off_topic') or (action == 'inappropriate') \
-            or (action == 'contact_info') or (action == 'other'):
-        return mod_inbox_reject_reason(data, moderation)
+    elif (action == 'urgent') or (action == 'other'):
+        return mod_inbox_reject_reason(data, moderation, 'mod-flagged')
+    elif (action == 'coaching'):
+        return mod_inbox_reject_reason(data, moderation, 'coaching')
+        
 
 
 def mod_approved_advice(data, action, moderation):
@@ -831,7 +822,7 @@ def mod_approved_advice(data, action, moderation):
         print(traceback.format_exc())
 
 
-def mod_flagged_resolve(data, moderation):
+def mod_flagged_resolve(data, moderation, origin_channel):
     original_message = data.get('original_message')
     text = original_message.get('text')
     resolved_by = data.get('user').get('name')
@@ -862,7 +853,7 @@ def mod_flagged_resolve(data, moderation):
         data = response.json()
         if data.get('ok'):
 
-            token, channel_id = SlackSdk.get_channel_data('#mod-flagged')
+            token, channel_id = SlackSdk.get_channel_data(f'#{origin_channel}')
             ts = data.get('ts')
 
             save_moderation_action(moderation, resolved_by, channel_id,
@@ -872,10 +863,9 @@ def mod_flagged_resolve(data, moderation):
     return HttpResponse('')
 
 
-def mod_flagged(data, action, moderation):
-
+def mod_flagged(data, action, moderation, origin_channel):
     if action == 'resolve':
-        return mod_flagged_resolve(data, moderation)
+        return mod_flagged_resolve(data, moderation, origin_channel)
     assert False, action
 
 
@@ -911,6 +901,8 @@ def moderate(data):
         if callback_id == 'mod-approved-advice':
             return mod_approved_advice(data, action, moderation)
         elif callback_id == 'mod-flagged':
-            return mod_flagged(data, action, moderation)
+            return mod_flagged(data, action, moderation, 'mod-flagged')
+        elif callback_id == 'coaching':
+            return mod_flagged(data, action, moderation, 'coaching')
 
         return HttpResponse(json.dumps(data, indent=4))

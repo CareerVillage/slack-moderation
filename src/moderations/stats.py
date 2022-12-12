@@ -34,19 +34,18 @@ def percentile(N, percent, key=lambda x:x):
 
 moderation_actions = [
     'approve',
-    'inappropriate',
-    'contact_info',
+    'urgent',
+    'coaching',
     'other',
-    'off_topic',
 ]
 
 
 flag_actions = [
-    'inappropriate',
-    'contact_info',
+    'urgent',
+    'coaching',
     'other',
-    'off_topic',
 ]
+
 
 def get_leaderboard():
     actions = ModerationAction.objects.filter(action__in=moderation_actions).values(
