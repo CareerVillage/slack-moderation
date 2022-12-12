@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from .models import Moderation, ModerationAction
 from .serializers import ModerationSerializer
 from .slack import SlackSdk, moderate, mod_inbox_approved, mod_inbox_reject_reason
-from .stats import get_leaderboard
+from .stats import get_leaderboard, get_simple_leaderboard_num_weeks
 from .tasks import post_moderation_task
 
 
@@ -96,8 +96,23 @@ def slack_response(request):
 
 @api_view(['POST'])
 def generate_stats(request):
-
     leaderboard = get_leaderboard()
     slack = SlackSdk()
     slack.post_leaderboard(leaderboard)
+    return Response('')
+
+
+@api_view(['POST'])
+def generate_stats_okr(request):
+    leaderboard = get_simple_leaderboard_num_weeks(weeks=12)
+    slack = SlackSdk()
+    slack.post_simple_leaderboard_timeframe(leaderboard, timeframe='last OKR')
+    return Response('')
+
+
+@api_view(['POST'])
+def generate_stats_3w(request):
+    leaderboard = get_simple_leaderboard_num_weeks(weeks=3)
+    slack = SlackSdk()
+    slack.post_simple_leaderboard_timeframe(leaderboard, timeframe='last 3 weeks')
     return Response('')

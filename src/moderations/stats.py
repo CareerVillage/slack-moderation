@@ -32,23 +32,22 @@ def percentile(N, percent, key=lambda x:x):
     return d0+d1
 
 
+moderation_actions = [
+    'approve',
+    'urgent',
+    'coaching',
+    'other',
+]
+
+
+flag_actions = [
+    'urgent',
+    'coaching',
+    'other',
+]
+
+
 def get_leaderboard():
-    """
-    """
-
-    moderation_actions = [
-        'approve',
-        'urgent',
-        'coaching',
-        'other',
-    ]
-
-    flag_actions = [
-        'urgent',
-        'coaching',
-        'other',
-    ]
-
     actions = ModerationAction.objects.filter(action__in=moderation_actions).values(
         'action_author_id').annotate(total=Count('action_author_id')).order_by('-total')
 
@@ -93,18 +92,14 @@ def get_leaderboard():
         time_to_approve=F('created_at') - F('moderation__created_at')).values(
         'action', 'time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
 
-    seven_days_review_count = ModerationAction.objects.filter(action__in=moderation_actions,
-            created_at__gte=timezone.now() - timedelta(days=7)).exclude(action_author_id='ModBot').count()
-    seven_days_review_time_avg = ModerationAction.objects.filter(action__in=moderation_actions,
-            created_at__gte=timezone.now() - timedelta(days=7)).exclude(action_author_id='ModBot').annotate(
+    seven_days_moderation_actions = ModerationAction.objects.filter(action__in=moderation_actions,
+                                                                    created_at__gte=timezone.now() - timedelta(days=7)
+                                                                    ).exclude(action_author_id='ModBot')
+    seven_days_review_count = seven_days_moderation_actions.count()
+    seven_days_review_time_avg = seven_days_moderation_actions.annotate(
             time_to_approve=F('created_at') - F('moderation__created_at')
             ).values('time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
-    seven_days_reviews = ModerationAction.objects.filter(
-            action__in=moderation_actions,
-            created_at__gte=timezone.now() - timedelta(days=7)
-        ).exclude(
-            action_author_id='ModBot'
-        ).annotate(
+    seven_days_reviews = seven_days_moderation_actions.annotate(
             time_to_approve=F('created_at') - F('moderation__created_at')
         ).values_list('time_to_approve', flat=True)
     seven_days_review_time_p90_in_seconds = percentile(
@@ -160,3 +155,43 @@ def get_leaderboard():
         'counts': counts,
         'last_unmoderated_content_date': last_unmoderated_content_date,
     }
+
+
+def get_simple_leaderboard_num_weeks(weeks):
+    okr_moderation_actions = ModerationAction.objects.filter(action__in=moderation_actions,
+                                                             created_at__gte=timezone.now() - timedelta(weeks=weeks)
+                                                             ).exclude(action_author_id='ModBot')
+    okr_review_count = okr_moderation_actions.count()
+    okr_review_time_avg = okr_moderation_actions.annotate(
+            time_to_approve=F('created_at') - F('moderation__created_at')
+            ).values('time_to_approve').aggregate(Avg('time_to_approve'))['time_to_approve__avg']
+    okr_reviews = okr_moderation_actions.annotate(
+            time_to_approve=F('created_at') - F('moderation__created_at')
+        ).values_list('time_to_approve', flat=True)
+    okr_review_time_p90_in_seconds = percentile(
+            sorted(okr_reviews),
+            percent= 0.9, # 90th percentile
+            key= lambda x:x.total_seconds()
+        )
+    okr_review_time_p90 = timedelta(seconds=okr_review_time_p90_in_seconds)
+    
+    resolve_actions = ModerationAction.objects.filter(action='resolve', created_at__gte=timezone.now() - timedelta(weeks=weeks))
+    okr_resolution_count = resolve_actions.count()
+    okr_resolution_time_avg = (resolve_actions.annotate(time_to_approve=F('created_at') - F('moderation__created_at'))
+                                              .values('action', 'time_to_approve')
+                                              .aggregate(Avg('time_to_approve'))
+                                              )['time_to_approve__avg']
+
+    return {
+        'review': {
+            'average': okr_review_time_avg, 
+            'p90': okr_review_time_p90,
+            'count': okr_review_count,
+        },
+        'resolution': {
+            'average': okr_resolution_time_avg, 
+            'count': okr_resolution_count,
+        }
+    }
+
+

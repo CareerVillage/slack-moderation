@@ -223,6 +223,34 @@ class SlackSdk(object):
         return SlackSdk.create_message(token, channel_id,
                                        text, [], in_channel=True, is_async=True)
 
+
+    @staticmethod
+    def post_simple_leaderboard_timeframe(leaderboard, timeframe):
+        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
+
+        # Post on slack both reports
+        text = f'MOD TEAM {timeframe.upper()} REPORT AS OF {datetime.utcnow()} UTC\n'
+        text += '```\n'
+        text += 'Average time to first mod review (%s): %s over %i pieces of content\n' \
+            % (timeframe,
+               timedelta_to_str(leaderboard['review']['average']),
+               leaderboard['review']['count'])
+
+        text += '90th Percentile time to first mod review (%s): %s over %i pieces of content\n' \
+            % (timeframe,
+               timedelta_to_str(leaderboard['review']['p90']),
+               leaderboard['review']['count'])
+
+        text += 'Average time to first mod resolution (%s): %s over %i pieces of content\n' \
+            % (timeframe,
+               timedelta_to_str(leaderboard['resolution']['average']),
+               leaderboard['resolution']['count'])
+        text += '```\n'
+
+        return SlackSdk.create_message(token, channel_id,
+                                       text, [], in_channel=True, is_async=True)
+
+
     @staticmethod
     def create_message(access_token, channel_id,
                        text='', attachments=[], in_channel=False, is_async=False):
