@@ -1,7 +1,7 @@
 import logging
 import time
 
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -99,7 +99,7 @@ def generate_stats(request):
     leaderboard = get_leaderboard()
     slack = SlackSdk()
     slack.post_leaderboard(leaderboard)
-    return Response('')
+    return Response(status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -107,7 +107,7 @@ def generate_stats_okr(request):
     leaderboard = get_simple_leaderboard_num_weeks(weeks=12)
     slack = SlackSdk()
     slack.post_simple_leaderboard_timeframe(leaderboard, timeframe='last OKR')
-    return Response('')
+    return Response(status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -115,4 +115,12 @@ def generate_stats_3w(request):
     leaderboard = get_simple_leaderboard_num_weeks(weeks=3)
     slack = SlackSdk()
     slack.post_simple_leaderboard_timeframe(leaderboard, timeframe='last 3 weeks')
-    return Response('')
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def generate_mod_inbox_status(request):
+    slack = SlackSdk()
+    mod_inbox_msg_count = len(slack.get_messages_from_channel('#mod-inbox'))
+    slack.post_simple_leaderboard_timeframe(mod_inbox_msg_count)
+    return Response(status=status.HTTP_200_OK)
