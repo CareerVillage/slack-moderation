@@ -132,7 +132,7 @@ def get_leaderboard():
 
     slack = SlackSdk()
 
-    list_of_ts_in_mod_inbox = [message['ts'] for message in slack.get_all_messages_of_channel('#mod-inbox')]
+    list_of_ts_in_mod_inbox = [message['ts'] for message in slack.get_messages_from_channel('#mod-inbox')]
     messages_in_mod_inbox = Moderation.objects.filter(message_id__in=list_of_ts_in_mod_inbox).order_by('created_at')
     if messages_in_mod_inbox:
         last_unmoderated_content_date = messages_in_mod_inbox[0].created_at.strftime('%Y-%m-%d')
@@ -193,5 +193,3 @@ def get_simple_leaderboard_num_weeks(weeks):
             'count': okr_resolution_count,
         }
     }
-
-
