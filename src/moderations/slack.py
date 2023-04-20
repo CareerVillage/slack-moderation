@@ -47,16 +47,24 @@ class SlackSdk(object):
             return None, None
 
     @staticmethod
-    def get_all_messages_of_channel(channel):
+    def get_messages_from_channel(channel, param='limit', param_value='2'):
         token, channel_id = SlackSdk.get_channel_data(channel)
 
-        url='https://slack.com/api/conversations.history'
+        url=f'https://slack.com/api/conversations.history?{param}={param_value}'
         params = {
-                'channel': channel_id,
-            }
+            'channel': channel_id,
+        }
 
         response = get_request_task(url, params, token)
-        return response.json()['messages']
+        response_json = response.json()
+        messages = response_json['messages']
+        if response_json['has_more']:
+            extra_messages = SlackSdk.get_messages_from_channel(channel,
+                                                                'cursor',
+                                                                response_json['response_metadata']['next_cursor']
+                                                                )
+            messages = messages + extra_messages
+        return messages
 
     @staticmethod
     def post_moderation(text):
@@ -247,6 +255,16 @@ class SlackSdk(object):
                leaderboard['resolution']['count'])
         text += '```\n'
 
+        return SlackSdk.create_message(token, channel_id,
+                                       text, [], in_channel=True, is_async=True)
+        
+    
+    @staticmethod
+    def post_simple_leaderboard_timeframe(mod_inbox_msg_count):
+        token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
+
+        # Post on slack both reports
+        text = f'There are {mod_inbox_msg_count} messages in the #mod-inbox channel'
         return SlackSdk.create_message(token, channel_id,
                                        text, [], in_channel=True, is_async=True)
 
