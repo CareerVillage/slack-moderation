@@ -7,6 +7,12 @@ services:
             - .:/moderation
             - ./src/assets:/moderation/src/assets
         command: './run_django.sh'
+        restart: always
+        stdin_open: true
+        tty: true
+        logging:
+            options:
+                max-size: 4096m
 
     nginx:
         build: ./nginx
@@ -14,6 +20,11 @@ services:
             - ./src/assets:/moderation/src/assets
         depends_on:
             - slack-moderation
+        restart: always
+        stdin_open: true
+        tty: true
+        logging:
+            options:
+                max-size: 4096m
 volumes:
     pg-data:
-
