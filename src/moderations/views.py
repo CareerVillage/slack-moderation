@@ -1,6 +1,7 @@
 import logging
 import time
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -30,7 +31,27 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(serializer.data)
-        
+
+    def _modbot_action(self, action, mod_obj, msg_text):
+        data_for_mod_bot = {
+            'original_message': {
+                'text': msg_text
+            },
+            'user': {
+                'name': 'ModBot'
+            },
+            'action_ts': str(time.time()),
+            'actions': [
+                {
+                    'value': 'Other'
+                }
+            ],
+            'message_ts': mod_obj.message_id,
+        }
+        if action == 'approve':
+            mod_inbox_approved(data_for_mod_bot, mod_obj)
+        elif action == 'flag':
+            mod_inbox_reject_reason(data_for_mod_bot, mod_obj, 'mod-flagged')
 
     def perform_create(self, serializer):
         """Override method in order to include interaction with Slack
@@ -38,7 +59,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
            Send message to Slack
         """
         data = serializer.validated_data
-        
+
         # Temporary fix while we discover why we receive duplicated messages
         duplicated = False
         old_objs = Moderation.objects.filter(content_key=data['content_key']).values_list('content', flat=True)
@@ -47,6 +68,13 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
             print(f"Duplicated message recieved but not sent: id:{data['content_key']} content:{data['content']} author_id:{data['content_author_id']}")
 
         if not duplicated:
+            # Check if there is already a message in mod-inbox with the same node_id, if there is, send it to mod_approved
+            try:
+                old_node = Moderation.objects.get(content_key=data['content_key'], status='#modinbox')
+                self._modbot_action('approve', old_node, data['content'])
+            except ObjectDoesNotExist:
+                pass
+
             moderation = Moderation.objects.create(
                 content_key=data['content_key'],
                 content=data['content'],
@@ -59,31 +87,10 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
             ModerationAction.objects.create(moderation=moderation, action='moderate')
 
-            print('------')
-            print(data)
-            print('------')
-
-            if data['auto_approve'] is True or data['auto_flag'] is True:
-                data_for_mod_bot = {
-                    'original_message': {
-                        'text': data['content']
-                    },
-                    'user': {
-                        'name': 'ModBot'
-                    },
-                    'action_ts': str(time.time()),
-                    'actions': [
-                        {
-                            'value': 'Other'
-                        }
-                    ],
-                    'message_ts': Moderation.objects.get(id=moderation.id).message_id,
-                }
-
-                if data['auto_approve'] == True:
-                    mod_inbox_approved(data_for_mod_bot, moderation)
-                elif data['auto_flag'] == True:
-                    mod_inbox_reject_reason(data_for_mod_bot, moderation, 'mod-flagged')          
+            if data['auto_approve'] is True:
+                self._modbot_action('approve', moderation, data['content'])
+            elif data['auto_flag'] is True:
+                self._modbot_action('flag', moderation, data['content'])
 
 
 @api_view(['POST'])
