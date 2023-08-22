@@ -24,7 +24,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         content_id = self.request.query_params.get('contentId', None)
-        if not content_id is None:
+        if content_id is not None:
             queryset = ModerationAction.objects.filter(moderation__content_key=content_id)
         else:
             queryset = ModerationAction.objects.filter(pk=1)
@@ -46,7 +46,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
                     'value': 'Other'
                 }
             ],
-            'message_ts': mod_obj.message_id,
+            'message_ts': Moderation.objects.get(id=mod_obj.id).message_id,
         }
         if action == 'approve':
             mod_inbox_approved(data_for_mod_bot, mod_obj)
@@ -61,13 +61,11 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         data = serializer.validated_data
 
         # Temporary fix while we discover why we receive duplicated messages
-        duplicated = False
-        old_objs = Moderation.objects.filter(content_key=data['content_key']).values_list('content', flat=True)
-        if old_objs and old_objs[0] == data['content']:
-            duplicated = True
-            print(f"Duplicated message recieved but not sent: id:{data['content_key']} content:{data['content']} author_id:{data['content_author_id']}")
+        duplicated = Moderation.objects.filter(content_key=data['content_key'], content=data['content']).exists()
 
-        if not duplicated:
+        if duplicated:
+            print(f"Duplicated message recieved but not sent: id:{data['content_key']} content:{data['content']} author_id:{data['content_author_id']}")
+        else:
             # Check if there is already a message in mod-inbox with the same node_id, if there is, send it to mod_approved
             try:
                 old_node = Moderation.objects.get(content_key=data['content_key'], status='#modinbox')

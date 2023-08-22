@@ -341,7 +341,6 @@ def is_answer(text):
 
 
 def mod_inbox_approved(data, moderation):
-
     original_message = data.get('original_message')
     text = original_message.get('text')
     approved_by = data.get('user').get('name')
