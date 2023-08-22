@@ -69,7 +69,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
             # Check if there is already a message in mod-inbox with the same node_id, if there is, send it to mod_approved
             try:
                 old_node = Moderation.objects.get(content_key=data['content_key'], status='#modinbox')
-                self._modbot_action('approve', old_node, data['content'])
+                self._modbot_action('approve', old_node, old_node.content)
             except ObjectDoesNotExist:
                 pass
 
