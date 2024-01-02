@@ -127,5 +127,5 @@ def generate_stats_3w(request):
 def generate_mod_inbox_status(request):
     slack = SlackSdk()
     mod_inbox_msg_count = len(slack.get_messages_from_channel('#mod-inbox'))
-    slack.post_simple_leaderboard_timeframe(mod_inbox_msg_count)
+    slack.post_amount_of_msg_in_mod_inbox(mod_inbox_msg_count)
     return Response(status=status.HTTP_200_OK)
