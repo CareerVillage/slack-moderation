@@ -50,7 +50,7 @@ class SlackSdk(object):
     def get_messages_from_channel(channel, param='limit', param_value='2'):
         token, channel_id = SlackSdk.get_channel_data(channel)
 
-        url=f'https://slack.com/api/conversations.history?{param}={param_value}'
+        url = f'https://slack.com/api/conversations.history?{param}={param_value}'
         params = {
             'channel': channel_id,
         }
@@ -126,7 +126,7 @@ class SlackSdk(object):
                 text += (
                     '```\n'
                     'LAST WEEK LEADERBOARD\n')
-                
+
             text += (
                 '┌----------------------┬----------------------┐\n'
                 '│ {0: <20} | {1: <20} │\n'
@@ -141,7 +141,7 @@ class SlackSdk(object):
                 if k and k != 'ModBot':
                     text += '├----------------------┼----------------------┤\n'
                     text += '│ {0: <20} │ {1: <20} │\n'.format(k, v)
-    
+
                     # Divide the table in multiple messages because it fails if the text/table is too long
                     count += 1
                     if count >= 20:
@@ -155,8 +155,6 @@ class SlackSdk(object):
             text += '```\n'
             return SlackSdk.create_message(token, channel_id,
                                            text, [], in_channel=True, is_async=True)
-
-        
 
         # Post on slack both tables
         post_leaderboard_on_slack(leaderboard['all_time'], 
@@ -216,11 +214,10 @@ class SlackSdk(object):
             % (urgent_total,
                avg(urgent_total, counts['total_flagged']))
 
-        coaching_total = counts['coaching'] if 'coaching' in counts else 0
-        text += 'Reason: Coaching: %i (%.2f%% of flags)\n' \
-            % (coaching_total,
-               avg(coaching_total, counts['total_flagged']))
-
+        ai_total = counts['AI'] if 'AI' in counts else 0
+        text += 'Reason: AI: %i (%.2f%% of flags)\n' \
+            % (ai_total,
+               avg(ai_total, counts['total_flagged']))
 
         other_total = counts['other'] if 'other' in counts else 0
         text += 'Reason: Other: %i (%.2f%% of flags)\n' \
@@ -230,7 +227,6 @@ class SlackSdk(object):
 
         return SlackSdk.create_message(token, channel_id,
                                        text, [], in_channel=True, is_async=True)
-
 
     @staticmethod
     def post_simple_leaderboard_timeframe(leaderboard, timeframe):
@@ -257,17 +253,15 @@ class SlackSdk(object):
 
         return SlackSdk.create_message(token, channel_id,
                                        text, [], in_channel=True, is_async=True)
-        
-    
+
     @staticmethod
-    def post_simple_leaderboard_timeframe(mod_inbox_msg_count):
+    def post_amount_of_msg_in_mod_inbox(mod_inbox_msg_count):
         token, channel_id = SlackSdk.get_channel_data('#mod-leaderboard')
 
         # Post on slack both reports
         text = f'There are {mod_inbox_msg_count} messages in the #mod-inbox channel'
         return SlackSdk.create_message(token, channel_id,
                                        text, [], in_channel=True, is_async=True)
-
 
     @staticmethod
     def create_message(access_token, channel_id,
@@ -314,25 +308,25 @@ class SlackSdk(object):
     @staticmethod
     def delete_message(access_token, channel_id, ts):
         return get_request_task(url='https://slack.com/api/chat.delete',
-                                 params={
-                                     'ts': ts,
-                                     'channel': channel_id,
-                                 },
-                                 access_token=access_token)
+                                params={
+                                    'ts': ts,
+                                    'channel': channel_id,
+                                },
+                                access_token=access_token)
 
     @staticmethod
     def update_message(access_token, channel_id, ts,
                        text='', attachments=[]):
 
         return get_request_task(url='https://slack.com/api/chat.update',
-                                 params={
-                                     'ts': ts,
-                                     'channel': channel_id,
-                                     'text': text,
-                                     'attachments': json.dumps(attachments),
-                                     'parse': 'none',
-                                 },
-                                 access_token=access_token)
+                                params={
+                                    'ts': ts,
+                                    'channel': channel_id,
+                                    'text': text,
+                                    'attachments': json.dumps(attachments),
+                                    'parse': 'none',
+                                },
+                                access_token=access_token)
 
 
 def is_answer(text):
@@ -650,7 +644,6 @@ def mod_approve(data, moderation):
             }
         ]
 
-
         token, channel_id = SlackSdk.get_channel_data('#best-of-village')
         response = SlackSdk.update_message(token, channel_id, ts,
                                            text=text, attachments=attachments)
@@ -685,10 +678,10 @@ def mod_inbox_reject(data, moderation):
                     'style': 'danger'
                 },
                 {
-                    'name': 'Coaching',
-                    'text': 'Coaching',
+                    'name': 'AI',
+                    'text': 'AI',
                     'type': 'button',
-                    'value': 'coaching',
+                    'value': 'AI',
                     'style': 'danger'
                 },
                 {
@@ -799,7 +792,6 @@ def mod_inbox_reject_reason(data, moderation, channel_to_send):
 
 
 def mod_inbox(data, action, moderation):
-
     if action == 'approve':
         return mod_inbox_approved(data, moderation)
 
@@ -811,9 +803,8 @@ def mod_inbox(data, action, moderation):
 
     elif (action == 'urgent') or (action == 'other'):
         return mod_inbox_reject_reason(data, moderation, 'mod-flagged')
-    elif (action == 'coaching'):
-        return mod_inbox_reject_reason(data, moderation, 'coaching')
-        
+    elif action == 'AI':
+        return mod_inbox_reject_reason(data, moderation, 'mod-suspected-ai')
 
 
 def mod_approved_advice(data, action, moderation):
@@ -919,7 +910,7 @@ def moderate(data):
             return mod_approved_advice(data, action, moderation)
         elif callback_id == 'mod-flagged':
             return mod_flagged(data, action, moderation, 'mod-flagged')
-        elif callback_id == 'coaching':
-            return mod_flagged(data, action, moderation, 'coaching')
+        elif callback_id == 'mod-suspected-ai':
+            return mod_flagged(data, action, moderation, 'mod-suspected-ai')
 
         return HttpResponse(json.dumps(data, indent=4))

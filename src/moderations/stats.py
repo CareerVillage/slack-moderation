@@ -35,14 +35,14 @@ def percentile(N, percent, key=lambda x:x):
 moderation_actions = [
     'approve',
     'urgent',
-    'coaching',
+    'AI',
     'other',
 ]
 
 
 flag_actions = [
     'urgent',
-    'coaching',
+    'AI',
     'other',
 ]
 
