@@ -13,6 +13,8 @@ services:
         logging:
             options:
                 max-size: 4096m
+        env_file:
+        - ./.env
 
     nginx:
         build: ./nginx
@@ -26,5 +28,7 @@ services:
         logging:
             options:
                 max-size: 4096m
+        env_file:
+          - ./.env
 volumes:
     pg-data:
