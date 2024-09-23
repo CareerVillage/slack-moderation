@@ -67,11 +67,11 @@ drop-db:
 
 # Creates Django migrations:
 makemigrations APP='':
-    docker compose exec django python manage.py makemigrations {{APP}}
+    docker compose exec slack-moderation python manage.py makemigrations {{APP}}
 
 # Runs pending Django migrations:
 migrate APP='' NUMBER='':
-    docker compose exec django python ./manage.py migrate {{APP}} {{NUMBER}}
+    docker compose exec slack-moderation python ./manage.py migrate {{APP}} {{NUMBER}}
 
 ################################################
 ################# BACKEND
@@ -79,19 +79,19 @@ migrate APP='' NUMBER='':
 
 # Runs Django tests. If no ARGS are specified, all tests are executed
 test ARGS='':
-    docker compose exec django python manage.py test {{ARGS}}
+    docker compose exec slack-moderation python manage.py test {{ARGS}}
 
 # Creates a shell
 bash:
-    docker compose exec django bash
+    docker compose exec slack-moderation bash
 
 # Creates a django shell
 shell:
-    docker compose exec django python manage.py shell
+    docker compose exec slack-moderation python manage.py shell
 
 # Runs a Django manage.py command
 manage ARGS='':
-    docker compose exec django python manage.py {{ARGS}}
+    docker compose exec slack-moderation python manage.py {{ARGS}}
 
 # Attach to paused process in Django container by default
 attach CONTAINER='slack-moderation-slack-moderation-1':
