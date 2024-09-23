@@ -2,6 +2,7 @@ FROM python:3.12-slim-bookworm
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ENV C_FORCE_ROOT True
 
 RUN apt-get clean && \
     apt-get update -y && \

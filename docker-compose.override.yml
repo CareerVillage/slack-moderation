@@ -18,3 +18,7 @@ services:
     nginx:
         ports:
             - 8000:80
+
+    celery_worker:
+        volumes:
+        - .:/src

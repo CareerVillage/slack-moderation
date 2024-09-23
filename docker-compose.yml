@@ -14,7 +14,7 @@ services:
             options:
                 max-size: 4096m
         env_file:
-        - ./.env
+            - ./.env
 
     nginx:
         build: ./nginx
@@ -29,6 +29,25 @@ services:
             options:
                 max-size: 4096m
         env_file:
-          - ./.env
+            - ./.env
+
+    rabbit:
+        image: rabbitmq:3.13-alpine
+        restart: always
+        logging:
+            options:
+                max-size: 4096m
+
+    celery_worker:
+        build: .
+        command: './run_celery_worker.sh'
+        restart: always
+        depends_on:
+            - slack-moderation
+        logging:
+            options:
+                max-size: 4096m
+        env_file:
+            - ./.env
 volumes:
     pg-data:
