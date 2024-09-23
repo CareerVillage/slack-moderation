@@ -17,5 +17,4 @@ def mark_new_user_content_as_approved(node_id):
         "Content-type": "application/json",
     }
 
-    # Should we use celery for this, to avoid delay in button pressing?
     requests.post(url, data=json.dumps(payload), headers=headers)
