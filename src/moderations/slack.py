@@ -4,11 +4,13 @@ import re
 import traceback
 from datetime import datetime, timezone
 
+import requests
 from django.conf import settings
 from django.http import HttpResponse
 from slack_bolt import App
 
 from moderations.models import Moderation, ModerationAction
+from moderations.tasks import mark_new_user_content_as_approved
 from moderations.utils import timedelta_to_str
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -72,12 +74,15 @@ class SlackSdk(object):
         return messages
 
     @staticmethod
-    def post_moderation(moderation_id, data):
+    def post_moderation(moderation, data):
+        slack_channel = (
+            "new-user-content" if data.get("new_user_content") else "mod-inbox"
+        )
         text = data["content"]
         attachments = [
             {
                 "fallback": "Moderator actions",
-                "callback_id": "mod-inbox",
+                "callback_id": slack_channel,
                 "attachment_type": "default",
                 "actions": [
                     {
@@ -97,12 +102,11 @@ class SlackSdk(object):
             }
         ]
 
-        channel_id = SlackSdk._get_channel_id("mod-inbox")
+        channel_id = SlackSdk._get_channel_id(slack_channel)
         response = SlackSdk.create_message(channel_id, text, attachments)
         json_response = response.data
 
         message_id = json_response.get("ts")
-        moderation = Moderation.objects.get(id=moderation_id)
         moderation.message_id = message_id
         moderation.save()
 
@@ -345,7 +349,7 @@ def is_answer(text):
     return ("posted the" in text) and ("answer" in text) and ("in response to" in text)
 
 
-def mod_inbox_approved(data, moderation):
+def mod_inbox_approved(data, moderation, origin_channel):
     original_message = data.get("original_message")
     text = original_message.get("text")
     approved_by = data.get("user").get("name")
@@ -371,13 +375,17 @@ def mod_inbox_approved(data, moderation):
     if response.status_code == 200:
         data = response.data
         if data.get("ok"):
-            channel_id = SlackSdk._get_channel_id("mod-inbox")
+            channel_id = SlackSdk._get_channel_id(origin_channel)
             # Save the moderation action
             save_moderation_action(
                 moderation, approved_by, channel_id, "approve", data.get("ts")
             )
-            # Delete the message from mod-inbox
+            # Delete the message from mod-inbox or new-user-content
             SlackSdk.delete_message(channel_id, ts)
+
+            # If the message was in new-user-content, mark it as approved in QA database
+            if origin_channel == "new-user-content":
+                mark_new_user_content_as_approved.delay(moderation.content_key)
 
             if is_answer(text):
                 send_to_approved_advice(data)
@@ -653,7 +661,7 @@ def mod_approve(data):
         print(traceback.format_exc())
 
 
-def mod_inbox_reject(data):
+def mod_inbox_reject(data, origin_channel):
     original_message = data.get("original_message")
     text = original_message.get("text")
     ts = data.get("message_ts")
@@ -662,7 +670,7 @@ def mod_inbox_reject(data):
         {
             "fallback": "Moderator actions",
             "text": "_Reject: Select a reason_",
-            "callback_id": "mod-inbox",
+            "callback_id": origin_channel,
             "attachment_type": "default",
             "mrkdwn_in": ["text"],
             "actions": [
@@ -692,13 +700,13 @@ def mod_inbox_reject(data):
         }
     ]
 
-    channel_id = SlackSdk._get_channel_id("mod-inbox")
+    channel_id = SlackSdk._get_channel_id(origin_channel)
     SlackSdk.update_message(channel_id, ts, text=text, attachments=attachments)
 
     return HttpResponse("")
 
 
-def mod_inbox_reject_undo(data):
+def mod_inbox_reject_undo(data, origin_channel):
     original_message = data.get("original_message")
     text = original_message.get("text")
     ts = data.get("message_ts")
@@ -706,7 +714,7 @@ def mod_inbox_reject_undo(data):
     attachments = [
         {
             "fallback": "Moderator actions",
-            "callback_id": "mod-inbox",
+            "callback_id": origin_channel,
             "attachment_type": "default",
             "actions": [
                 {
@@ -726,13 +734,13 @@ def mod_inbox_reject_undo(data):
         }
     ]
 
-    channel_id = SlackSdk._get_channel_id("mod-inbox")
+    channel_id = SlackSdk._get_channel_id(origin_channel)
     SlackSdk.update_message(channel_id, ts, text=text, attachments=attachments)
 
     return HttpResponse("")
 
 
-def mod_inbox_reject_reason(data, moderation, channel_to_send):
+def mod_inbox_reject_reason(data, moderation, origin_channel, channel_to_send):
     original_message = data.get("original_message")
     text = original_message.get("text")
     rejected_by = data.get("user").get("name")
@@ -768,7 +776,7 @@ def mod_inbox_reject_reason(data, moderation, channel_to_send):
     if response.status_code == 200:
         data = response.data
         if data.get("ok"):
-            channel_id = SlackSdk._get_channel_id("mod-inbox")
+            channel_id = SlackSdk._get_channel_id(origin_channel)
 
             save_moderation_action(
                 moderation, rejected_by, channel_id, rejected_reason, data.get("ts")
@@ -779,20 +787,24 @@ def mod_inbox_reject_reason(data, moderation, channel_to_send):
     return HttpResponse("")
 
 
-def mod_inbox(data, action, moderation):
+def mod_inbox(data, action, moderation, origin_channel):
     if action == "approve":
-        return mod_inbox_approved(data, moderation)
+        return mod_inbox_approved(data, moderation, origin_channel)
 
     elif action == "reject":
-        return mod_inbox_reject(data)
+        return mod_inbox_reject(data, origin_channel)
 
     elif action == "undo":
-        return mod_inbox_reject_undo(data)
+        return mod_inbox_reject_undo(data, origin_channel)
 
     elif (action == "urgent") or (action == "other"):
-        return mod_inbox_reject_reason(data, moderation, "mod-flagged")
+        return mod_inbox_reject_reason(
+            data, moderation, origin_channel, channel_to_send="mod-flagged"
+        )
     elif action == "AI":
-        return mod_inbox_reject_reason(data, moderation, "mod-suspected-ai")
+        return mod_inbox_reject_reason(
+            data, moderation, origin_channel, channel_to_send="mod-suspected-ai"
+        )
 
 
 def mod_approved_advice(data, action):
@@ -886,13 +898,11 @@ def moderate(data):
 
         callback_id = data.get("callback_id")
 
-        if callback_id == "mod-inbox":
-            return mod_inbox(data, action, moderation)
+        if callback_id == "mod-inbox" or callback_id == "new-user-content":
+            return mod_inbox(data, action, moderation, callback_id)
         elif callback_id == "mod-approved-advice":
             return mod_approved_advice(data, action)
-        elif callback_id == "mod-flagged":
-            return mod_flagged(data, action, moderation, "mod-flagged")
-        elif callback_id == "mod-suspected-ai":
-            return mod_flagged(data, action, moderation, "mod-suspected-ai")
+        elif callback_id == "mod-flagged" or callback_id == "mod-suspected-ai":
+            return mod_flagged(data, action, moderation, callback_id)
 
         return HttpResponse(json.dumps(data, indent=4))

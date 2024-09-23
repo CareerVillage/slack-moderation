@@ -178,3 +178,13 @@ if ENABLE_SENTRY:
         traces_sample_rate=1.0,
         send_default_pii=True,
     )
+
+if ENVIRONMENT == "DEVELOPMENT":
+    CV_BASE_URL = (
+        "http://192.168.1.7:8080"  # Put your router local ip + :8000 port in here
+    )
+else:
+    CV_BASE_URL = env.str("CV_BASE_URL")
+
+# API key used to authenticate request coming/going from/to Q&A
+CV_MODERATION_API_KEY = env.str("CV_MODERATION_API_KEY")

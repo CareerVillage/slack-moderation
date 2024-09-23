@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Moderation, ModerationAction
+from .permissions import HasModerationApiKey
 from .serializers import ModerationSerializer
 from .slack import SlackSdk, mod_inbox_approved, mod_inbox_reject_reason, moderate
 from .stats import get_leaderboard, get_simple_leaderboard_num_weeks
@@ -20,6 +21,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
     queryset = ModerationAction.objects.all()
     serializer_class = ModerationSerializer
+    permission_classes = (HasModerationApiKey,)
 
     def list(self, request):
         content_id = self.request.query_params.get("contentId", None)
@@ -33,7 +35,7 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-    def _modbot_action(self, action, mod_obj, msg_text):
+    def _modbot_action(self, action, mod_obj, msg_text, origin_channel):
         data_for_mod_bot = {
             "original_message": {"text": msg_text},
             "user": {"name": "ModBot"},
@@ -42,9 +44,11 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
             "message_ts": Moderation.objects.get(id=mod_obj.id).message_id,
         }
         if action == "approve":
-            mod_inbox_approved(data_for_mod_bot, mod_obj)
+            mod_inbox_approved(data_for_mod_bot, mod_obj, origin_channel)
         elif action == "flag":
-            mod_inbox_reject_reason(data_for_mod_bot, mod_obj, "mod-flagged")
+            mod_inbox_reject_reason(
+                data_for_mod_bot, mod_obj, origin_channel, channel_to_send="mod-flagged"
+            )
 
     def perform_create(self, serializer):
         """Override method in order to include interaction with Slack
@@ -66,30 +70,42 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         else:
             # Check if there is already a message in mod-inbox with the same node_id,
             # if there is, send it to mod_approved
+            # This was done to exclude moderation after answer edited by AI
+            channel_name = (
+                "new-user-content" if data["new_user_content"] else "mod-inbox"
+            )
+            status = f"#{channel_name}"
+
             try:
                 old_node = Moderation.objects.get(
-                    content_key=data["content_key"], status="#modinbox"
+                    content_key=data["content_key"], status=status
                 )
-                self._modbot_action("approve", old_node, old_node.content)
+                self._modbot_action(
+                    "approve", old_node, old_node.content, origin_channel=channel_name
+                )
             except ObjectDoesNotExist:
                 pass
 
             moderation = Moderation.objects.create(
                 content_key=data["content_key"],
+                content_type=data["content_type"],
                 content=data["content"],
                 content_author_id=data["content_author_id"],
-                status="#modinbox",
+                status=status,
                 status_reason="moderate",
+                was_new_user_content=data["new_user_content"],
             )
 
-            SlackSdk.post_moderation(moderation_id=moderation.id, data=data)
+            SlackSdk.post_moderation(moderation=moderation, data=data)
 
             ModerationAction.objects.create(moderation=moderation, action="moderate")
 
             if data["auto_approve"] is True:
-                self._modbot_action("approve", moderation, data["content"])
+                self._modbot_action(
+                    "approve", moderation, data["content"], channel_name
+                )
             elif data["auto_flag"] is True:
-                self._modbot_action("flag", moderation, data["content"])
+                self._modbot_action("flag", moderation, data["content"], channel_name)
 
 
 @api_view(["POST"])
