@@ -181,7 +181,7 @@ if ENABLE_SENTRY:
 
 if ENVIRONMENT == "DEVELOPMENT":
     CV_BASE_URL = (
-        "http://192.168.1.7:8080"  # Put your router local ip + :8000 port in here
+        "http://192.168.1.7:8080"  # Put your router local ip + :8080 port in here
     )
 else:
     CV_BASE_URL = env.str("CV_BASE_URL")
