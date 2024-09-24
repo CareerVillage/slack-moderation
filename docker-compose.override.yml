@@ -8,6 +8,10 @@ services:
         volumes:
             - pg-data:/var/lib/postgresql/data
         command: -p 5433
+        environment:
+            - POSTGRES_DB=moderation
+            - POSTGRES_USER=moderation
+            - POSTGRES_PASSWORD=moderation
 
     slack-moderation:
         expose:
