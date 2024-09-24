@@ -44,7 +44,11 @@ class Moderation(models.Model):
         (USER_ABOUT_PROFILE, "useraboutprofile"),
     )
     content_type = models.CharField(
-        max_length=50, choices=CONTENT_TYPE_OPTIONS, null=True, blank=True
+        max_length=50,
+        choices=CONTENT_TYPE_OPTIONS,
+        null=True,
+        blank=True,
+        db_comment="Indicated the type of content from a predefined list of types.",
     )
 
     content = models.TextField()
@@ -54,7 +58,10 @@ class Moderation(models.Model):
     status_reason = models.CharField(max_length=50)
     status_date = models.DateTimeField(auto_now=True)
     message_id = models.TextField(blank=True, null=True)
-    was_new_user_content = models.BooleanField(default=False)
+    was_new_user_content = models.BooleanField(
+        default=False,
+        db_comment="Indicates if the content was from a new user and needs pre-approval before showing it.",
+    )
 
     objects = ModerationManager()
 
