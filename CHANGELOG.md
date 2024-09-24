@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Add justfile, changelog and pre-commit hooks.
+- Add content pre-approval for new users.
 
 ### Changed
 - Use slack_bolt library instead of old implementation and remove unused code.
