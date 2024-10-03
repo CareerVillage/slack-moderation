@@ -1,0 +1,40 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: check-json
+    -   id: check-xml
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: detect-private-key
+-   repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+    -   id: flake8
+        args: [--max-line-length=120,
+                '--ignore=E122, E126, E722, E731, E741, F401, F403, F405, F821, W503, W504, W605, E203']
+        exclude: 'migrations/|commands/'
+-   repo: https://github.com/hhatto/autopep8
+    rev: v2.0.4
+    hooks:
+    -   id: autopep8
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+    -   id: isort
+        name: isort (python)
+        args: [
+            "--profile", "black",
+            "--filter-files",
+            "--py", "3",
+            "--known-local-folder", "moderation",
+            "--known-local-folder", "moderations",
+        ]
+# Using this mirror lets us use mypyc-compiled black, which is about 2x faster
+-   repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 23.12.1
+    hooks:
+    -   id: black
+        language_version: python3

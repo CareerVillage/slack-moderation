@@ -2,7 +2,7 @@ version: "3"
 
 services:
     postgres:
-        image: postgres:13-alpine
+        image: postgres:16-alpine
         ports:
             - "5433:5433"
         volumes:
@@ -18,12 +18,11 @@ services:
             - 8000
         depends_on:
             - postgres
-        environment:
-          - ENVIRONMENT=Development
-          - POSTGRES_HOST=postgres
-          - POSTGRES_USER=moderation
-          - POSTGRES_DB=moderation
 
     nginx:
         ports:
             - 8000:80
+
+    celery_worker:
+        volumes:
+        - .:/src
