@@ -1,7 +1,7 @@
 import os
 
 import environ
-import envkey  # noqa
+import envkey
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -17,14 +17,14 @@ def rel(*x):
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 
-ENVIRONMENT = env.str("ENVIRONMENT", "DEVELOPMENT")
+ENVIRONMENT = envkey.get("ENVIRONMENT", "DEVELOPMENT")
 
 DEBUG = False
 
-SECRET_KEY = env.str("SECRET_KEY")
+SECRET_KEY = envkey.get("SECRET_KEY")
 
-ec2_ip_address = env.str("EC2_IP", "")
-ec2_url_address = env.str("EC2_URL", "")
+ec2_ip_address = envkey.get("EC2_IP", "")
+ec2_url_address = envkey.get("EC2_URL", "")
 
 if ENVIRONMENT == "DEVELOPMENT":
     ALLOWED_HOSTS = ["*"]
@@ -99,7 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Celery
-CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", "")
+CELERY_BROKER_URL = envkey.get("CELERY_BROKER_URL", "")
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
@@ -158,20 +158,20 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.str("POSTGRES_DB"),
-        "USER": env.str("POSTGRES_USER"),
-        "PASSWORD": env.str("POSTGRES_PASSWORD"),
-        "HOST": env.str("POSTGRES_HOST"),
-        "PORT": env.str("POSTGRES_PORT"),
+        "NAME": envkey.get("POSTGRES_DB"),
+        "USER": envkey.get("POSTGRES_USER"),
+        "PASSWORD": envkey.get("POSTGRES_PASSWORD"),
+        "HOST": envkey.get("POSTGRES_HOST"),
+        "PORT": envkey.get("POSTGRES_PORT"),
     }
 }
 
-SLACK_BOT_OAUTH_TOKEN = env.str("SLACK_BOT_OAUTH_TOKEN")
-SLACK_SIGNING_SECRET = env.str("SLACK_SIGNING_SECRET")
+SLACK_BOT_OAUTH_TOKEN = envkey.get("SLACK_BOT_OAUTH_TOKEN")
+SLACK_SIGNING_SECRET = envkey.get("SLACK_SIGNING_SECRET")
 
 ENABLE_SENTRY = ENVIRONMENT != "DEVELOPMENT"
 if ENABLE_SENTRY:
-    SENTRY_DSN = env.str("SENTRY_DSN", "")
+    SENTRY_DSN = envkey.get("SENTRY_DSN", "")
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
@@ -181,10 +181,10 @@ if ENABLE_SENTRY:
 
 if ENVIRONMENT == "DEVELOPMENT":
     CV_BASE_URL = (
-        "http://192.168.1.7:8080"  # Put your router local ip + :8080 port in here
+        "http://192.168.0.183:8080"  # Put your router local ip + :8080 port in here
     )
 else:
-    CV_BASE_URL = env.str("CV_BASE_URL")
+    CV_BASE_URL = envkey.get("CV_BASE_URL")
 
 # API key used to authenticate request coming/going from/to Q&A
-CV_MODERATION_API_KEY = env.str("CV_MODERATION_API_KEY")
+CV_MODERATION_API_KEY = envkey.get("CV_MODERATION_API_KEY")
