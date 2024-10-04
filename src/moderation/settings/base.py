@@ -29,7 +29,12 @@ ec2_url_address = envkey.get("EC2_URL", "")
 if ENVIRONMENT == "DEVELOPMENT":
     ALLOWED_HOSTS = ["*"]
 else:
-    ALLOWED_HOSTS = ["slack-moderation.com", ec2_ip_address, ec2_url_address]
+    ALLOWED_HOSTS = [
+        "localhost",
+        "slack-moderation.com",
+        ec2_ip_address,
+        ec2_url_address,
+    ]
 
 REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": []}
 
