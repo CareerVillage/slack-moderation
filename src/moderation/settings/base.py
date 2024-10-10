@@ -1,105 +1,117 @@
 import os
+
 import environ
+import envkey
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+
+env = environ.Env()
+
+
+def rel(*x):
+    """Get the full root for the specified path relative to this file."""
+    return os.path.join(APP_ROOT, *x)
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 
-APP_ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
+ENVIRONMENT = envkey.get("ENVIRONMENT", "DEVELOPMENT")
 
+DEBUG = False
 
-def rel(*x):
-    """ Get the full root for the specified path relative to this file.
-    """
-    return os.path.join(APP_ROOT, *x)
+SECRET_KEY = envkey.get("SECRET_KEY")
 
+ec2_ip_address = envkey.get("EC2_IP", "")
+ec2_url_address = envkey.get("EC2_URL", "")
 
-ALLOWED_HOSTS = ['*']
+if ENVIRONMENT == "DEVELOPMENT":
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = [
+        "localhost",
+        "slack-moderation.com",
+        ec2_ip_address,
+        ec2_url_address,
+    ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': []
-}
+REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": []}
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'social_django',
-    'accounts',
-    'moderations',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "moderations",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'moderation.urls'
+ROOT_URLCONF = "moderation.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            rel('apps/moderations/templates'),
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            rel("apps/moderations/templates"),
         ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "debug": DEBUG,
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'moderation.wsgi.application'
+WSGI_APPLICATION = "moderation.wsgi.application"
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.'
-                'UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation."
+        "UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.'
-                'MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation." "MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.'
-                'CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation." "CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.'
-                'NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation." "NumericPasswordValidator",
     },
 ]
 
+# Celery
+CELERY_BROKER_URL = envkey.get("CELERY_BROKER_URL", "")
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -109,103 +121,75 @@ USE_TZ = True
 
 
 # Static files
-STATIC_ROOT = rel('assets/')
-STATIC_URL = '/static/'
-STATIC_APP_ROOT = rel('static/')
+STATIC_ROOT = rel("assets/")
+STATIC_URL = "/static/"
+STATIC_APP_ROOT = rel("static/")
 
-STATICFILES_DIRS = (
-    STATIC_APP_ROOT,
-)
+STATICFILES_DIRS = (STATIC_APP_ROOT,)
 
 STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder',
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-AUTHENTICATION_BACKENDS = (
-    'social_core.backends.slack.SlackOAuth2',
-)
+AUTHENTICATION_BACKENDS = ()
 
-
-SOCIAL_AUTH_JSONFIELD_ENABLED = True
-SLACK_SOCIAL_AUTH_RAISE_EXCEPTIONS = True
-SOCIAL_AUTH_RAISE_EXCEPTIONS = True
 RAISE_EXCEPTIONS = True
 
-
-SOCIAL_AUTH_PIPELINE = (
-    'social_core.pipeline.social_auth.social_details',
-    'social_core.pipeline.social_auth.social_uid',
-    'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.user.get_username',
-    'accounts.views.social_complete',
-)
-
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = "/"
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'filters': None,
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "filters": None,
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
         },
     },
 }
 
-if os.environ.get('ENVIRONMENT', 'Development') == 'Production':
-    import envkey
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-    env = environ.Env()
-
-    DEBUG = False
-    TEMPLATE_DEBUG = DEBUG
-
-    ENABLE_SENTRY = True
-
-    SECRET_KEY = env.str('SECRET_KEY')
-
-    ec2_ip_address = env.str('EC2_IP')
-    ec2_url_address = env.str('EC2_URL')
-    ALLOWED_HOSTS = ['slack-moderation.com', ec2_ip_address, ec2_url_address]
-
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env.str('POSTGRES_DB'),
-            'USER': env.str('POSTGRES_USER'),
-            'PASSWORD': env.str('POSTGRES_PASSWORD'),
-            'HOST': env.str('POSTGRES_HOST'),
-            'PORT': '5432',
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": envkey.get("POSTGRES_DB"),
+        "USER": envkey.get("POSTGRES_USER"),
+        "PASSWORD": envkey.get("POSTGRES_PASSWORD"),
+        "HOST": envkey.get("POSTGRES_HOST"),
+        "PORT": envkey.get("POSTGRES_PORT"),
     }
+}
 
-    SOCIAL_AUTH_SLACK_KEY = env.str('SOCIAL_AUTH_SLACK_KEY')
-    SOCIAL_AUTH_SLACK_SECRET = env.str('SOCIAL_AUTH_SLACK_SECRET')
-    SOCIAL_AUTH_SLACK_SCOPE = ['incoming-webhook', 'chat:write:user', 'chat:write:bot',
-                               'channels:history', 'groups:history', 'mpim:history', 'im:history']
+SLACK_BOT_OAUTH_TOKEN = envkey.get("SLACK_BOT_OAUTH_TOKEN")
+SLACK_SIGNING_SECRET = envkey.get("SLACK_SIGNING_SECRET")
 
-    SENTRY_DSN = env.str('SENTRY_DSN', '')
+ENABLE_SENTRY = ENVIRONMENT != "DEVELOPMENT"
+if ENABLE_SENTRY:
+    SENTRY_DSN = envkey.get("SENTRY_DSN", "")
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         traces_sample_rate=1.0,
-        send_default_pii=True
+        send_default_pii=True,
     )
 
+if ENVIRONMENT == "DEVELOPMENT":
+    CV_BASE_URL = (
+        "http://192.168.0.183:8080"  # Put your router local ip + :8080 port in here
+    )
 else:
-    from .local import *
+    CV_BASE_URL = envkey.get("CV_BASE_URL")
+
+# API key used to authenticate request coming/going from/to Q&A
+CV_MODERATION_API_KEY = envkey.get("CV_MODERATION_API_KEY")

@@ -1,17 +1,20 @@
+import json
+
 import requests
-from .models import Moderation
+from django.conf import settings
+
+from moderation.celery import app as celery_app
 
 
-def get_request_task(url, params, access_token):
-    return requests.get(url, params=params, headers={'Authorization': f'Bearer {access_token}'})
+@celery_app.task
+def mark_new_user_content_as_approved(node_id):
+    url = f"{settings.CV_BASE_URL}/api/v2/internal/moderation/approve_node/"
+    payload = {
+        "node_id": node_id,
+    }
+    headers = {
+        "Authorization": f"Api-Key {settings.CV_MODERATION_API_KEY}",
+        "Content-type": "application/json",
+    }
 
-
-def post_moderation_task(moderation_id, data):
-    from .slack import SlackSdk
-    slack = SlackSdk()
-    response_data = slack.post_moderation(
-        text=data['content'])
-    message_id = response_data.get('ts')
-    moderation = Moderation.objects.get(id=moderation_id)
-    moderation.message_id = message_id
-    moderation.save()
+    requests.post(url, data=json.dumps(payload), headers=headers)

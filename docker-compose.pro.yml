@@ -2,13 +2,6 @@ version: "3"
 
 services:
     slack-moderation:
-        env_file:
-            - ./.env
-        environment:
-          - ENVIRONMENT=Production
-          - POSTGRES_HOST=${POSTGRES_HOST}
-          - POSTGRES_USER=${POSTGRES_USER}
-          - POSTGRES_DB=${POSTGRES_DB}
         volumes:
             - run:/moderation/src/run
 
@@ -16,11 +9,9 @@ services:
         ports:
             - 80:80
             - 443:443
-        volumes: 
+        volumes:
           - nginx-certs:/etc/nginx/certs
           - run:/moderation/src/run
-        env_file:
-          - ./.env
 volumes:
   nginx-certs:
   run:
