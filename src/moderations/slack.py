@@ -76,6 +76,9 @@ class SlackSdk(object):
             "new-user-content" if data.get("new_user_content") else "mod-inbox"
         )
         text = data["content"]
+        if slack_channel == "new-user-content":
+            text = "NEW USER CONTENT:\n" + text
+
         attachments = [
             {
                 "fallback": "Moderator actions",
