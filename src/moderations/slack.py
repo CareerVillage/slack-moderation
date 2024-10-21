@@ -4,7 +4,6 @@ import re
 import traceback
 from datetime import datetime, timezone
 
-import requests
 from django.conf import settings
 from django.http import HttpResponse
 from slack_bolt import App
@@ -44,9 +43,7 @@ app = App(
 class SlackSdk(object):
     @staticmethod
     def _get_channel_id(name: str) -> str:
-        channels = app.client.conversations_list()["channels"]
-        channel = [channel for channel in channels if channel.get("name") == name][0]
-        return channel["id"]
+        return settings.CHANNEL_IDS_DICT[name]
 
     @staticmethod
     def get_messages_from_channel(channel_name, param="limit", param_value="999"):
@@ -79,6 +76,9 @@ class SlackSdk(object):
             "new-user-content" if data.get("new_user_content") else "mod-inbox"
         )
         text = data["content"]
+        if slack_channel == "new-user-content":
+            text = "NEW USER CONTENT:\n" + text
+
         attachments = [
             {
                 "fallback": "Moderator actions",
@@ -294,11 +294,11 @@ class SlackSdk(object):
         return SlackSdk.create_message(channel_id, text, [], in_channel=True)
 
     @staticmethod
-    def post_amount_of_msg_in_mod_inbox(mod_inbox_msg_count):
+    def post_amount_of_msg_in_particular_channel(channel_name, msg_count):
         channel_id = SlackSdk._get_channel_id("mod-leaderboard")
 
         # Post on slack both reports
-        text = f"There are {mod_inbox_msg_count} messages in the #mod-inbox channel"
+        text = f"There are {msg_count} messages in the #{channel_name} channel"
         return SlackSdk.create_message(channel_id, text, [], in_channel=True)
 
     @staticmethod
@@ -306,19 +306,9 @@ class SlackSdk(object):
         try:
             is_image = "https://res.cloudinary.com/" in text
 
-            if len(text) >= 3500:
-                search_text = re.findall(
-                    r"^(.* posted the) <(https://.*)\|(.*)>.*:\n", text
-                )
-                if search_text:
-                    new_content_text = search_text[0][0]
-                    link = search_text[0][1]
-                    new_content_type = search_text[0][2]
-                    text = (
-                        "%s %s. WARNING: this content cannot be displayed, "
-                        "please read the complete content <%s|HERE>"
-                        % (new_content_text, new_content_type, link)
-                    )
+            # Cut the message if it's too long and add a "... (truncated)" at the end
+            if len(text) >= settings.SLACK_TEXT_MESSAGE_LIMIT:
+                text = text[: settings.SLACK_TEXT_MESSAGE_LIMIT] + "... (truncated)"
 
             params = {
                 "channel": channel_id,

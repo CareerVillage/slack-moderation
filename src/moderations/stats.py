@@ -163,11 +163,15 @@ def get_leaderboard():
     list_of_ts_in_mod_inbox = [
         message["ts"] for message in slack.get_messages_from_channel("mod-inbox")
     ]
-    messages_in_mod_inbox = Moderation.objects.filter(
-        message_id__in=list_of_ts_in_mod_inbox
+    list_of_ts_in_new_user_content = [
+        message["ts"] for message in slack.get_messages_from_channel("new-user-content")
+    ]
+    list_of_ts = list_of_ts_in_mod_inbox + list_of_ts_in_new_user_content
+    unmoderated_messages = Moderation.objects.filter(
+        message_id__in=list_of_ts
     ).order_by("created_at")
-    if messages_in_mod_inbox:
-        last_unmoderated_content_date = messages_in_mod_inbox[0].created_at.strftime(
+    if unmoderated_messages:
+        last_unmoderated_content_date = unmoderated_messages[0].created_at.strftime(
             "%Y-%m-%d"
         )
     else:
