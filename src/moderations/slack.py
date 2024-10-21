@@ -4,7 +4,6 @@ import re
 import traceback
 from datetime import datetime, timezone
 
-import requests
 from django.conf import settings
 from django.http import HttpResponse
 from slack_bolt import App
@@ -44,9 +43,7 @@ app = App(
 class SlackSdk(object):
     @staticmethod
     def _get_channel_id(name: str) -> str:
-        channels = app.client.conversations_list()["channels"]
-        channel = [channel for channel in channels if channel.get("name") == name][0]
-        return channel["id"]
+        return settings.CHANNEL_IDS_DICT[name]
 
     @staticmethod
     def get_messages_from_channel(channel_name, param="limit", param_value="999"):

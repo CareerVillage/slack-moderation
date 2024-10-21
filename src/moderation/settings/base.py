@@ -193,3 +193,6 @@ else:
 
 # API key used to authenticate request coming/going from/to Q&A
 CV_MODERATION_API_KEY = envkey.get("CV_MODERATION_API_KEY")
+
+# Load channel IDs
+from .channel_ids import *  # noqa
