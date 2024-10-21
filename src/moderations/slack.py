@@ -291,11 +291,11 @@ class SlackSdk(object):
         return SlackSdk.create_message(channel_id, text, [], in_channel=True)
 
     @staticmethod
-    def post_amount_of_msg_in_mod_inbox(mod_inbox_msg_count):
+    def post_amount_of_msg_in_particular_channel(channel_name, msg_count):
         channel_id = SlackSdk._get_channel_id("mod-leaderboard")
 
         # Post on slack both reports
-        text = f"There are {mod_inbox_msg_count} messages in the #mod-inbox channel"
+        text = f"There are {msg_count} messages in the #{channel_name} channel"
         return SlackSdk.create_message(channel_id, text, [], in_channel=True)
 
     @staticmethod
