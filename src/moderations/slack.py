@@ -306,19 +306,9 @@ class SlackSdk(object):
         try:
             is_image = "https://res.cloudinary.com/" in text
 
-            if len(text) >= 3500:
-                search_text = re.findall(
-                    r"^(.* posted the) <(https://.*)\|(.*)>.*:\n", text
-                )
-                if search_text:
-                    new_content_text = search_text[0][0]
-                    link = search_text[0][1]
-                    new_content_type = search_text[0][2]
-                    text = (
-                        "%s %s. WARNING: this content cannot be displayed, "
-                        "please read the complete content <%s|HERE>"
-                        % (new_content_text, new_content_type, link)
-                    )
+            # Cut the message if it's too long and add a "... (truncated)" at the end
+            if len(text) >= settings.SLACK_TEXT_MESSAGE_LIMIT:
+                text = text[: settings.SLACK_TEXT_MESSAGE_LIMIT] + "... (truncated)"
 
             params = {
                 "channel": channel_id,

@@ -196,3 +196,8 @@ CV_MODERATION_API_KEY = envkey.get("CV_MODERATION_API_KEY")
 
 # Load channel IDs
 from .channel_ids import *  # noqa
+
+# The maximum number of characters that can be sent in a single Slack message
+# https://api.slack.com/methods/chat.postMessage#truncating
+# It says 4000 but we put 3000 to be safe
+SLACK_TEXT_MESSAGE_LIMIT = 3000
