@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Upcoming Releases
+## [Upcoming Releases
+
+### Added
+- Explicitly mark message as NEW USER CONTENT
+- Cut message if it's too long to post
+
+### Changed
+- Include new-user-content channel in /current-count command
+- Include new-user-content channel in "oldest unmoderated piece of content"
+
+### Fixed
+- Add channel ids to envkey to fix conversations.list API rate limit error.
+
+
+## [v1.1.0] - 2024-10-10
 
 ### Added
 - Add justfile, changelog and pre-commit hooks.
