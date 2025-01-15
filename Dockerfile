@@ -16,12 +16,10 @@ RUN mkdir -p /moderation/src
 WORKDIR /moderation
 
 COPY .env .
-COPY .envkey .
 
-# install envkey-source
-RUN VERSION=$(curl https://envkey-releases.s3.amazonaws.com/latest/envkeysource-version.txt) \
-  && curl -s https://envkey-releases.s3.amazonaws.com/envkeysource/release_artifacts/$VERSION/install.sh | bash
-RUN eval $(envkey-source)
+# Install infisical CLI
+RUN curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash
+RUN apt-get update && apt-get install -y infisical
 
 RUN pip install --upgrade pip
 
