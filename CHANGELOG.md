@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+### Removed
+
+### Deprecated
+
+### Security
+- Solve security vulneravility by updating Django.
 
 ## [v1.1.1] - 2024-10-29
 
