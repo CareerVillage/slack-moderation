@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Upcoming Releases
+## Upcoming Releases
+
+### Added
+
+### Changed
+- Replace Envkey with Infisical.
+
+### Fixed
+
+### Removed
+
+### Deprecated
+
+### Security
+- Solve security vulneravility by updating Django.
+
+## [v1.1.1] - 2024-10-29
 
 ### Added
 - Explicitly mark message as NEW USER CONTENT
