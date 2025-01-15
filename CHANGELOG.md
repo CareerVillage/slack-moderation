@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+
+### Fixed
+
+### Removed
+
+### Deprecated
+
+### Security
+
+## [v1.1.2] - 2025-01-15
+
+### Added
+
+### Changed
 - Replace Envkey with Infisical.
 
 ### Fixed
