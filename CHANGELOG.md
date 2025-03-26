@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 ### Fixed
+- Make ModBot don't auto-approve duplicated content from new-user-content
 
 ### Removed
 
