@@ -12,14 +12,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 ### Fixed
-- Make ModBot don't auto-approve duplicated content from new-user-content.
 
 ### Removed
 
 ### Deprecated
 
 ### Security
+
+
+## [v1.1.3] - 2025-03-27
+
+### Fixed
+- Make ModBot don't auto-approve duplicated content from new-user-content.
+
+### Security
 - Solve security vulnerability.
+
 
 ## [v1.1.2] - 2025-01-15
 
@@ -28,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 - Solve security vulneravility by updating Django.
+
 
 ## [v1.1.1] - 2024-10-29
 
@@ -42,6 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Add channel ids to envkey to fix conversations.list API rate limit error.
 
+
 ## [v1.1.0] - 2024-10-10
 
 ### Added
@@ -51,6 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Use slack_bolt library instead of old implementation and remove unused code.
 - Use envkey in local development environment (not only in prod), to simplify local setup.
+
 
 ## [v1.0.0] - 2024-08-30
 
