@@ -1,6 +1,5 @@
 import json
 import pprint
-import re
 import traceback
 from datetime import datetime, timezone
 
@@ -339,7 +338,7 @@ def is_answer(text):
     return ("posted the" in text) and ("answer" in text) and ("in response to" in text)
 
 
-def mod_inbox_approved(data, moderation, origin_channel):
+def mod_inbox_approved(data, moderation, origin_channel, fake_approve=False):
     original_message = data.get("original_message")
     text = original_message.get("text")
     approved_by = data.get("user").get("name")
@@ -348,11 +347,15 @@ def mod_inbox_approved(data, moderation, origin_channel):
     approved_time = approved_time.strftime("%Y-%m-%d %I:%M%p")
     ts = data.get("message_ts")
 
+    new_msg_action = (
+        "_Approved"
+        if not fake_approve
+        else f"_Moved to #mod-approved after receiving a more recent edited version in #{origin_channel}"
+    )
     attachments = [
         {
             "fallback": "Please moderate this.",
-            "text": ":white_check_mark: _Approved by @%s %s UTC_"
-            % (approved_by, approved_time),
+            "text": f":white_check_mark: {new_msg_action} by @{approved_by} {approved_time} UTC_",
             "callback_id": "mod-approved",
             "attachment_type": "default",
             "mrkdwn_in": ["text"],
@@ -374,7 +377,8 @@ def mod_inbox_approved(data, moderation, origin_channel):
             SlackSdk.delete_message(channel_id, ts)
 
             # If the message was in new-user-content, mark it as approved in QA database
-            if origin_channel == "new-user-content":
+            # Unless it was marked as fake_approve
+            if origin_channel == "new-user-content" and not fake_approve:
                 mark_new_user_content_as_approved.delay(moderation.content_key)
 
             if is_answer(text):

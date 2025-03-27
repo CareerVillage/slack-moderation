@@ -45,6 +45,12 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
         }
         if action == "approve":
             mod_inbox_approved(data_for_mod_bot, mod_obj, origin_channel)
+        elif action == "fake_approve":
+            # Fake approve is used to move a message to mod-approved without actually approving it
+            # Without doing mark_new_user_content_as_approved() in the end
+            mod_inbox_approved(
+                data_for_mod_bot, mod_obj, origin_channel, fake_approve=True
+            )
         elif action == "flag":
             mod_inbox_reject_reason(
                 data_for_mod_bot, mod_obj, origin_channel, channel_to_send="mod-flagged"
@@ -80,8 +86,14 @@ class ModerationActionModelViewSet(viewsets.ModelViewSet):
                 old_node = Moderation.objects.get(
                     content_key=data["content_key"], status=status
                 )
+                # We don't want to actually approve it, only move it to the mod-approved channel
+                # If we approve it, content from new_user_content will get marked as approved_to_be_showned,
+                # so people could approved their own questions by editing them (CV-1187)
                 self._modbot_action(
-                    "approve", old_node, old_node.content, origin_channel=channel_name
+                    "fake_approve",
+                    old_node,
+                    old_node.content,
+                    origin_channel=channel_name,
                 )
             except ObjectDoesNotExist:
                 pass

@@ -19,21 +19,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 
-## [v1.1.2] - 2025-01-15
 
-### Added
+## [v1.1.3] - 2025-03-27
+
+### Fixed
+- Make ModBot don't auto-approve duplicated content from new-user-content.
+
+### Security
+- Solve security vulnerability.
+
+
+## [v1.1.2] - 2025-01-15
 
 ### Changed
 - Replace Envkey with Infisical.
 
-### Fixed
-
-### Removed
-
-### Deprecated
-
 ### Security
 - Solve security vulneravility by updating Django.
+
 
 ## [v1.1.1] - 2024-10-29
 
@@ -59,7 +62,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use slack_bolt library instead of old implementation and remove unused code.
 - Use envkey in local development environment (not only in prod), to simplify local setup.
 
-### Fixed
 
 ## [v1.0.0] - 2024-08-30
 
