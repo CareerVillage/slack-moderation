@@ -22,5 +22,5 @@ def mark_new_user_content_as_approved(node_id):
     if response.status_code != 200:
         raise Exception(
             f"Failed to mark new user content as approved. Status code: {response.status_code}, "
-            "Response: {response.text}"
+            f"Response: {response.text}"
         )
