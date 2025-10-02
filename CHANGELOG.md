@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Upcoming Releases
 
 ### Added
+- Added logger to mark_new_user_content_as_approved.
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Deprecated
 
 ### Security
+- Update dependencies to solve security vulnerabilities.
 
 
 ## [v1.1.3] - 2025-03-27

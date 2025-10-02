@@ -17,4 +17,10 @@ def mark_new_user_content_as_approved(node_id):
         "Content-type": "application/json",
     }
 
-    requests.post(url, data=json.dumps(payload), headers=headers)
+    response = requests.post(url, data=json.dumps(payload), headers=headers)
+
+    if response.status_code != 200:
+        raise Exception(
+            f"Failed to mark new user content as approved. Status code: {response.status_code}, "
+            "Response: {response.text}"
+        )
