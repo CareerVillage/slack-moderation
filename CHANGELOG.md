@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Upcoming Releases
 
 ### Added
-- Added logger to mark_new_user_content_as_approved.
+- Added error handling and exception raising to mark_new_user_content_as_approved.
 
 ### Changed
 
