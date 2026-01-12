@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 
+## [v1.1.4] - 2026-01-13
+
+### Changed
+- Update SSL handling to use AWS ALB instead of Nginx + files (moving DNS from Namecheap to AWS Route53).
+
+### Security
+- Solve security vulnerabilities by updating Django and dependencies.
 
 ## [v1.1.3] - 2025-03-27
 
@@ -27,7 +34,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 - Solve security vulnerability.
-
 
 ## [v1.1.2] - 2025-01-15
 
