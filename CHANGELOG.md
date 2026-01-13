@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.1.4] - 2026-01-13
 
+### Added
+- Added error handling and exception raising to mark_new_user_content_as_approved.
+
 ### Changed
 - Update SSL handling to use AWS ALB instead of Nginx + files (moving DNS from Namecheap to AWS Route53).
 
