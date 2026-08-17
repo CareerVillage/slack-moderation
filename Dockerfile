@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.14.7-slim-trixie
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -10,7 +10,9 @@ RUN apt-get clean && \
     nginx \
     postgresql-client \
     curl \
-    gcc
+    gcc \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /moderation/src
 WORKDIR /moderation
@@ -19,7 +21,9 @@ COPY .env .
 
 # Install infisical CLI
 RUN curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash
-RUN apt-get update && apt-get install -y infisical
+RUN curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash \
+    && apt-get update && apt-get install -y --no-install-recommends infisical \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
 
