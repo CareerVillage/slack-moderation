@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 
+## [v1.1.5] - 2026-01-13
+
+### Changed
+- Update Python to 3.14.7 and upgrade dependencies.
+
+### Security
+- Solve security vulnerabilities by updating Django and dependencies.
+
 ## [v1.1.4] - 2026-01-13
 
 ### Added
