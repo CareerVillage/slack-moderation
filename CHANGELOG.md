@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 
-## [v1.1.5] - 2026-01-13
+## [v1.1.5] - 2026-08-17
 
 ### Changed
 - Update Python to 3.14.7 and upgrade dependencies.
