@@ -1,36 +1,37 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.14.7-slim-trixie
 
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV C_FORCE_ROOT True
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    C_FORCE_ROOT=True \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-RUN apt-get clean && \
-    apt-get update -y && \
-    apt-get install -y \
-    nginx \
-    postgresql-client \
-    curl \
-    gcc
-
-RUN mkdir -p /moderation/src
 WORKDIR /moderation
-
-COPY .env .
-
-# Install infisical CLI
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash
-RUN apt-get update && apt-get install -y infisical
-
-RUN pip install --upgrade pip
 
 COPY requirements.txt ./
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-RUN pip install ipython
+# build-essential/libpq-dev/curl are only needed to compile C extensions
+# and install infisical. They are purged in the same layer so they do not
+# stay in the final image.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        libpq5 \
+        libpq-dev \
+        libssl-dev \
+        postgresql-client \
+    && curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends infisical \
+    && pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && pip install ipython \
+    && apt-get purge -y --auto-remove build-essential libpq-dev libssl-dev curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY ./src /moderation/src
-
 WORKDIR /moderation/src
 
 ENTRYPOINT ["/moderation/src/docker-entrypoint.sh"]
