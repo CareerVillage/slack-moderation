@@ -7,7 +7,7 @@ django-extensions==4.1
 uWSGI==2.0.31
 django-environ==0.14.0
 python-dotenv==1.2.3
-setuptools==84.0.0
+setuptools==84.1.0
 newrelic==13.4.0
 sentry-sdk==2.68.0
 slack_bolt==1.30.0
