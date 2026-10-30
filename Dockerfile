@@ -1,4 +1,4 @@
-FROM python:3.14.7-slim-trixie
+FROM python:3.14.10-slim-trixie
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
