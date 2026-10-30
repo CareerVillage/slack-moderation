@@ -11,3 +11,4 @@ setuptools==84.0.0
 newrelic==13.4.0
 sentry-sdk==2.68.0
 slack_bolt==1.30.0
+certifi==2026.10.23
