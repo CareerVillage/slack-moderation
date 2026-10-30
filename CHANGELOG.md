@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Security
 
+## [v1.1.6] - 2026-10-30
+
+### Security
+- Update the base image to Python 3.14.10 and pin certifi to 2026.10.23 so the containers stop trusting the compromised eMudhra/emSign certificates (CVE-2026-111943).
+
 ## [v1.1.5] - 2026-08-17
 
 ### Changed
