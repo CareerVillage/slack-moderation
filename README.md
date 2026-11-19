@@ -1,4 +1,9 @@
 # slack-moderation
+
+> [!IMPORTANT]
+> **This repository is archived and no longer maintained.** In November 2026, CareerVillage.org moved Slack moderation into its main application and shut this service down. The code stays here for reference. The repository is read-only, so it accepts no new issues or pull requests.
+
+
 Forum-like applications that accept UGC (User-Generated Content) often require active moderation to ensure that content is appropriate. `slack-moderation` is a Django application that uses Slack channels as a moderation tool to review user-generated content. This application was created by CareerVillage.org to use in its slack-based moderation system. The focus is on using moderators to identify inappropriate content so that it can be dealt with appropriately (typically, that means it gets deleted).
 
 ## How important is `slack-moderation`?
